@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import ReactDOM from "react-dom/client";
+// import ReactDOM from "react-dom/client";
 // import { Button } from "react-bootstrap";
 import "./Dashboard.css";
 
@@ -16,7 +16,7 @@ async function fetchModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
   if (!token) {
-    window.location.href = "/public/login";
+    window.location.href = "/centrum/";
     return null;
   }
 
@@ -33,7 +33,7 @@ async function fetchModuleData(moduleId: number) {
   if (!response.ok) {
     if (![400, 404, 500].includes(response.status)) {
       localStorage.removeItem("sessionToken");
-      window.location.href = "/public/login";
+      window.location.href = "/centrum/";
     }
     console.error(`Fetch error: ${response.statusText}`);
     return null;
@@ -52,7 +52,7 @@ async function syncModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
   if (!token) {
-    window.location.href = "/public/login";
+    window.location.href = "/centrum/";
     return;
   }
 
@@ -80,7 +80,7 @@ async function syncModuleData(moduleId: number) {
 
   if (!response.ok) {
     localStorage.removeItem("sessionToken");
-    window.location.href = "/public/login";
+    window.location.href = "/centrum/";
     return;
   }
 
@@ -813,7 +813,7 @@ function Dashboard() {
       })
       .catch(() => {
         localStorage.removeItem("sessionToken");
-        window.location.href = "/logout"; // Redirect to login page
+        window.location.href = "/centrum/"; // Redirect to login page
       });
   }, []);
 
@@ -922,12 +922,4 @@ function Dashboard() {
     </div>
   );
 }
-
-
-const rootElement = document.getElementById("dashboard");
-if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(<Dashboard />);
-}
-
 export default Dashboard;

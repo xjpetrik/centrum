@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import ReactDOM from "react-dom";
 import CryptoJS from "crypto-js";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -27,7 +26,7 @@ const Login: React.FC = () => {
 
             if (response.ok) {
                 localStorage.setItem("sessionToken", data.token);
-                window.location.href = "/dashboard.html"; // Přesměrování na dashboard
+                window.location.href = "/centrum/"; // Přesměrování na dashboard
             } else {
                 setError(data.error || "Login failed");
             }
@@ -97,4 +96,4 @@ const Login: React.FC = () => {
         </div>
     );
 };
-ReactDOM.render(<Login />, document.getElementById("root"));
+export default Login;
