@@ -21,7 +21,7 @@ async function fetchModuleData(moduleId: number) {
   }
 
   const response = await fetch(
-    `http://localhost:8080/module-data/${moduleId}`,
+    `https://data-server-892925846021.europe-central2.run.app/module-data/${moduleId}`,
     {
       method: "GET",
       headers: {
@@ -69,7 +69,7 @@ async function syncModuleData(moduleId: number) {
     return;
   }
 
-  const response = await fetch("http://localhost:8080/module-data", {
+  const response = await fetch("https://data-server-892925846021.europe-central2.run.app/module-data", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -215,7 +215,7 @@ function ToDo({ name }: ToDoProps) {
           type="task"
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
-          placeholder="Add a new task"
+          placeholder="Přidej nový úkol"
           className="form-control"
           style={{ flex: 1, fontSize: "18px", minWidth: "200px" }}
           onKeyDown={(e) => {
@@ -796,7 +796,7 @@ function Dashboard() {
     }
 
     // Verify token with backend
-    fetch("http://localhost:8080/dashboard", {
+    fetch("https://data-server-892925846021.europe-central2.run.app/dashboard", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -856,18 +856,7 @@ function Dashboard() {
       >
         {activeModule === null ? (
           <div>
-            <img
-              src="home_slowed.gif"
-              alt="logo"
-              style={{
-                display: "block",
-                width: "50%",
-                marginTop: "10%",
-                marginLeft: "auto",
-                marginRight: "auto",
-              }}
-            />
-            <p style={{ fontSize: "30px" }}>Select a module</p>
+            <p style={{ fontSize: "30px" }}>Vyber modul</p>
           </div>
         ) : null}
         {activeModule === 1 ? (

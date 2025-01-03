@@ -17,7 +17,7 @@ const Login: React.FC = () => {
         }
         const hashedPassword = CryptoJS.SHA256(password).toString();
         try {
-            const response = await fetch("http://localhost:8080/login", {
+            const response = await fetch("https://data-server-892925846021.europe-central2.run.app/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, hashedPassword }),
