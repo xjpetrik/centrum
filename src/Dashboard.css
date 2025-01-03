@@ -1,0 +1,74 @@
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  width: 23%;
+  transition: width 0.3s ease;
+}
+
+.sidebar-container.collapsed {
+  width: 2%;
+}
+
+.toggle-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  min-width: 40px; /* Zajistí minimální klikací oblast */
+  width: 100%; /* Zachová plnou šířku v rámci rodiče */
+}
+
+.sidebar {
+  padding: 10px;
+}
+
+.list-group {
+  margin-top: 20px;
+}
+
+.list-group-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap; /* Zabraňuje zalamování textu */
+  overflow: hidden; /* Skryje přetečený text */
+  text-overflow: ellipsis; /* Přidá tři tečky pro indikaci přetečení */
+}
+
+.list-group-item.active {
+  background-color: #007bff;
+  color: white;
+}
+
+
+textarea.form-control {
+  width: 100%; /* Výchozí šířka na velkých displejích */
+}
+
+@media (max-width: 768px) {
+  .sidebar-container {
+    width: 60%; /* Sidebar zabere více místa na menších obrazovkách */
+  }
+  .sidebar-container.collapsed {
+    width: 10%; /* Zabrání příliš malému sidebaru na mobilních zařízeních */
+  }
+  .toggle-button {
+    min-width: 50px; /* Větší klikací oblast pro mobily */
+  }
+  textarea.form-control {
+    width: 190%; /* Širší šířka na menších displejích */
+  }
+  input[type="text"] {
+    min-width: 1000px; /* Minimální šířka na menších displejích */
+  }
+}
+
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
