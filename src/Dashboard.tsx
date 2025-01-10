@@ -343,7 +343,18 @@ function Notes() {
   });
 
   const [draftNotes, setDraftNotes] = useState<any[]>(notes); // Lokální stav pro okamžité zobrazení textu během psaní
-  const timeoutRefs = useRef<{ [key: number]: number | null }>({});
+  const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]); // Uloží refy pro všechny textarey
+  const timeoutRefs = useRef<{ [key: number]: number | null }>({}); // Uloží timeouty pro debouncing
+
+  // Automatické přizpůsobení výšky textarey při každém vykreslení
+  useEffect(() => {
+    textAreaRefs.current.forEach((textarea) => {
+      if (textarea) {
+        textarea.style.height = "auto"; // Reset výšky
+        textarea.style.height = `${textarea.scrollHeight}px`; // Nastavení výšky podle obsahu
+      }
+    });
+  }, [draftNotes]); // Spouští se při každé změně poznámky
 
   useEffect(() => {
     // Uloží poznámky do localStorage při aktualizaci
@@ -363,16 +374,17 @@ function Notes() {
       clearTimeout(timeoutRefs.current[index]!); // Zruší předchozí timeout, pokud existuje
     }
 
-    timeoutRefs.current[index] = setTimeout(() => {
+    // Nastaví timeout na 1 sekundu pro uložení změn
+    timeoutRefs.current[index] = window.setTimeout(() => {
       const updatedNotes = [...notes];
       updatedNotes[index] = {
         ...updatedNotes[index],
         text: value,
-        edit: true, // Označí poznámku jako upravenou
+        edit: true, // Označí poznámku jako upravenou po 1 sekundě nečinnosti
       };
 
-      setNotes(updatedNotes); // Aktualizuje hlavní poznámky až po 1 sekundě
-      timeoutRefs.current[index] = null; // Resetuje timeout
+      setNotes(updatedNotes); // Aktualizuje hlavní poznámky
+      timeoutRefs.current[index] = null; // Reset timeoutu
     }, 1000); // 1 sekunda
   };
 
@@ -392,6 +404,7 @@ function Notes() {
       {draftNotes.map((note: any, index: number) => (
         <textarea
           key={note.id}
+          ref={(el) => (textAreaRefs.current[index] = el)} // Uložení referencí na textarea
           value={note.text}
           onChange={(e) => handleTextChange(index, e.target.value)}
           className="form-control"
