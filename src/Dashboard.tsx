@@ -16,8 +16,8 @@ async function fetchModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
   if (!token) {
-    window.location.href = "/centrum/";
-    return null;
+    window.location.href = "/";
+    return 0;
   }
 
   const response = await fetch(
@@ -33,27 +33,32 @@ async function fetchModuleData(moduleId: number) {
   if (!response.ok) {
     if (![400, 404, 500].includes(response.status)) {
       localStorage.removeItem("sessionToken");
-      window.location.href = "/centrum/";
+      window.location.href = "/";
     }
     console.error(`Fetch error: ${response.statusText}`);
-    return null;
+    return 0;
   }
-
+  const storedDataString = localStorage.getItem(`moduleData-${moduleId}`);
+  const storedData = storedDataString ? JSON.parse(storedDataString) : [];
+  console.log(`X_moduleData-${moduleId}`, JSON.stringify(storedData));
   const serverResponse = await response.json();
-  const data = serverResponse.data || []; // Zajistí, že data bude minimálně prázdné pole
+  const newData = serverResponse.data || []; // Zajistí, že data bude minimálně prázdné pole
 
-  // Update local storage with the fetched data
-  localStorage.setItem(`moduleData-${moduleId}`, JSON.stringify(data));
-  console.log(`moduleData-${moduleId}`, JSON.stringify(data));
-  return data;
+  if (JSON.stringify(storedData) !== JSON.stringify(newData)) {
+    // Update local storage with the fetched data
+    localStorage.setItem(`moduleData-${moduleId}`, JSON.stringify(newData));
+    console.log(`moduleData-${moduleId}`, JSON.stringify(newData));
+    return 1;
+  }
+  return 0;
 }
 
 async function syncModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
   if (!token) {
-    window.location.href = "/centrum/";
-    return;
+    window.location.href = "/";
+    return 0;
   }
 
   // Retrieve local storage data and filter for edited items
@@ -66,36 +71,78 @@ async function syncModuleData(moduleId: number) {
 
   if (editedData.length === 0) {
     // No data to sync
-    return;
+    return 0;
   }
 
-  const response = await fetch("https://data-server-892925846021.europe-central2.run.app/module-data", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ moduleId, data: editedData }),
-  });
+  const response = await fetch(
+    "https://data-server-892925846021.europe-central2.run.app/module-data",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ moduleId, data: editedData }),
+    }
+  );
 
   if (!response.ok) {
     localStorage.removeItem("sessionToken");
-    window.location.href = "/centrum/";
-    return;
+    window.location.href = "/";
+    return 0;
   }
 
   // Optionally handle response from server
   const serverResponse = await response.json();
   console.log("Sync response:", serverResponse);
+  return 1;
 }
 
 interface SidebarProps {
   activeModule: number | null;
   setActiveModule: React.Dispatch<React.SetStateAction<number | null>>;
+  areNewData: boolean | null;
+  setNewDataAlert: React.Dispatch<React.SetStateAction<boolean | null>>;
 }
 
-function Sidebar({ activeModule, setActiveModule }: SidebarProps) {
+function Sidebar({ activeModule, setActiveModule, areNewData, setNewDataAlert }: SidebarProps) {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
+  const [isSynchronized, setSynchronize] = useState(true);
+  // 1 synchonized
+  // 0 error
+
+  // fetch when change
+  // sync interval
+  useEffect(() => {
+    if (activeModule !== null) {
+      const fetchDataAndSync = async () => {
+        const result = await fetchModuleData(activeModule);
+        if (result === 1) {
+          setNewDataAlert(true); // needs to be 2 and compare better
+        }
+  
+        const syncInterval = setInterval(async () => {
+          if (isSynchronized !== true) {
+            let result = await syncModuleData(activeModule);
+            if (result === 1) {
+              setSynchronize(false);
+              result = await fetchModuleData(activeModule);
+              if (result !== 1) {
+                console.log("Something went horribly wrong!");
+              } else {
+                setSynchronize(true);
+              }
+            }
+          }
+        }, 1000);
+  
+        // Vyčištění při odmountování komponenty
+        return () => clearInterval(syncInterval);
+      };
+  
+      fetchDataAndSync();
+    }
+  }, [activeModule, isSynchronized]);
 
   return (
     <>
@@ -127,6 +174,11 @@ function Sidebar({ activeModule, setActiveModule }: SidebarProps) {
                 </button>
               ))}
             </div>
+            <p className="mt-2">
+              Status:
+            {isSynchronized ? <b className="ms-1">✅</b> : <b className="ms-1">❌</b>}
+            {areNewData ? "Please check application storage and compare" : null}
+            </p>
           </div>
         )}
       </div>
@@ -361,15 +413,15 @@ function Calendar() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
 
-  const symbols = ["♥", "😈", "💣", "👍", "🐕", "💎", "☘︎"];
+  const symbols = ["👀", "😈", "💣", "🩸", "🧴", "🤧", "🍊"];
   const symbolColors: { [key: string]: string } = {
-    "♥": "red",
+    "👀": "black",
     "😈": "purple",
     "💣": "black",
-    "👍": "yellow",
-    "🐕": "grey",
-    "💎": "blue",
-    "☘︎": "green",
+    "🩸": "red",
+    "🧴": "yellow",
+    "🤧": "blue",
+    "🍊": "orange",
   };
 
   useEffect(() => {
@@ -417,7 +469,9 @@ function Calendar() {
 
   const handleSave = () => {
     if (selectedDay) {
-      const updatedData = calendarData.filter((entry) => entry.id !== selectedDay);
+      const updatedData = calendarData.filter(
+        (entry) => entry.id !== selectedDay
+      );
       updatedData.push({ id: selectedDay, text: selectedSymbols, edit: true });
       setCalendarData(updatedData);
 
@@ -440,13 +494,16 @@ function Calendar() {
       >
         {days.map((day, index) => {
           const dayKey = day.toISOString().split("T")[0];
-          const symbolsForDay = calendarData.find((entry) => entry.id === dayKey)?.text || [];
+          const symbolsForDay =
+            calendarData.find((entry) => entry.id === dayKey)?.text || [];
 
           return (
             <button
               key={index}
               className={`btn text-center ${
-                isToday(day) ? "btn-primary text-white" : "btn-outline-secondary"
+                isToday(day)
+                  ? "btn-primary text-white"
+                  : "btn-outline-secondary"
               }`}
               style={{
                 padding: "15px",
@@ -708,7 +765,6 @@ function Points({ name }: PointsProps) {
   );
 }
 
-
 interface Tale {
   name: string;
   preview: string;
@@ -721,7 +777,7 @@ function Tales() {
     const fetchTales = async () => {
       try {
         // Fetching the list of files from the /public/tales directory (requires API or predefined list)
-        const response = await fetch("/tales/manifest.json"); // Example manifest file
+        const response = await fetch("/tales/manifest.json");
         const data: Tale[] = await response.json();
         setTales(data);
       } catch (error) {
@@ -736,16 +792,18 @@ function Tales() {
     try {
       const response = await fetch(`/tales/${name}.txt`);
       const text = await response.text();
-  
+
       // blob temp data
       const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-  
+
       // blob in the same tab, making it compatible on phones
       window.location.href = url;
     } catch (error) {
       console.error("Failed to load tale content", error);
-      alert("An error occurred while loading the tale content. Please try again.");
+      alert(
+        "An error occurred while loading the tale content. Please try again."
+      );
     }
   };
 
@@ -786,22 +844,27 @@ function Tales() {
 function Dashboard() {
   const [activeModule, setActiveModule] = useState<number | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [areNewData, setNewDataAlert] = useState<boolean | null>(false);
+
 
   useEffect(() => {
     const token = localStorage.getItem("sessionToken");
 
     if (!token) {
-      window.location.href = "/public/login"; // Redirect to login page
+      window.location.href = "/";
       return;
     }
 
-    // Verify token with backend
-    fetch("https://data-server-892925846021.europe-central2.run.app/dashboard", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    // Verify token
+    fetch(
+      "https://data-server-892925846021.europe-central2.run.app/dashboard",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
       .then((response) => {
         if (!response.ok) {
           throw new Error("Unauthorized");
@@ -813,38 +876,25 @@ function Dashboard() {
       })
       .catch(() => {
         localStorage.removeItem("sessionToken");
-        window.location.href = "/centrum/"; // Redirect to login page
+        window.location.href = "/";
       });
   }, []);
 
-  useEffect(() => {
-    if (activeModule !== null) {
-      // Fetch data immediately when the module changes
-      fetchModuleData(activeModule);
-
-      // Set up interval to sync and fetch data
-      const syncInterval = setInterval(() => {
-        syncModuleData(activeModule).then(() => {
-          fetchModuleData(activeModule);
-        });
-      }, 2500);
-
-      // Clean up interval on component unmount
-      return () => clearInterval(syncInterval);
-    }
-  }, [activeModule]);
-
   if (isAuthenticated === null) {
-    return <div>Loading</div>; // Display while verifying
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <img src="home_cropped.gif" />
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
-    return null; // Redirect has already occurred
+    return null;
   }
 
   return (
     <div className="dashboard" style={{ display: "flex", height: "100vh" }}>
-      <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} />
+      <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} areNewData={areNewData} setNewDataAlert={setNewDataAlert}/>
       <div
         className="main-content"
         style={{
