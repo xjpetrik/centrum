@@ -41,10 +41,18 @@ async function fetchModuleData(moduleId: number) {
   const storedDataString = localStorage.getItem(`moduleData-${moduleId}`);
   const storedData = storedDataString ? JSON.parse(storedDataString) : [];
   console.log(`X_moduleData-${moduleId}`, JSON.stringify(storedData));
+
   const serverResponse = await response.json();
   const newData = serverResponse.data || []; // Zajistí, že data bude minimálně prázdné pole
 
-  if (JSON.stringify(storedData) !== JSON.stringify(newData)) {
+  // Funkce pro seřazení pole podle "id"
+  const sortById = (array: any) => array.sort((a: any, b: any) => a.id - b.id);
+
+  // Seřazení obou datových sad
+  const sortedStoredData = sortById([...storedData]); // Klonuje a seřadí
+  const sortedNewData = sortById([...newData]);
+
+  if (JSON.stringify(sortedStoredData) !== JSON.stringify(sortedNewData)) {
     // Update local storage with the fetched data
     localStorage.setItem(`moduleData-${moduleId}`, JSON.stringify(newData));
     console.log(`moduleData-${moduleId}`, JSON.stringify(newData));
@@ -105,11 +113,14 @@ interface SidebarProps {
   setNewDataAlert: React.Dispatch<React.SetStateAction<boolean | null>>;
 }
 
-function Sidebar({ activeModule, setActiveModule, areNewData, setNewDataAlert }: SidebarProps) {
+function Sidebar({
+  activeModule,
+  setActiveModule,
+  areNewData,
+  setNewDataAlert,
+}: SidebarProps) {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isSynchronized, setSynchronize] = useState(true);
-  // 1 synchonized
-  // 0 error
 
   // fetch when change
   // sync interval
@@ -117,10 +128,8 @@ function Sidebar({ activeModule, setActiveModule, areNewData, setNewDataAlert }:
     if (activeModule !== null) {
       const fetchDataAndSync = async () => {
         const result = await fetchModuleData(activeModule);
-        if (result === 1) {
-          setNewDataAlert(true); // needs to be 2 and compare better
-        }
-  
+        if (result === 1) setNewDataAlert(true);
+        else setNewDataAlert(false);
         const syncInterval = setInterval(async () => {
           if (isSynchronized !== true) {
             let result = await syncModuleData(activeModule);
@@ -128,18 +137,18 @@ function Sidebar({ activeModule, setActiveModule, areNewData, setNewDataAlert }:
               setSynchronize(false);
               result = await fetchModuleData(activeModule);
               if (result !== 1) {
-                console.log("Something went horribly wrong!");
+                setNewDataAlert(true);
               } else {
                 setSynchronize(true);
               }
             }
           }
         }, 1000);
-  
+
         // Vyčištění při odmountování komponenty
         return () => clearInterval(syncInterval);
       };
-  
+
       fetchDataAndSync();
     }
   }, [activeModule, isSynchronized]);
@@ -176,8 +185,13 @@ function Sidebar({ activeModule, setActiveModule, areNewData, setNewDataAlert }:
             </div>
             <p className="mt-2">
               Status:
-            {isSynchronized ? <b className="ms-1">✅</b> : <b className="ms-1">❌</b>}
-            {areNewData ? "Please check application storage and compare" : null}
+              {areNewData ? (
+                <b className="ms-1 fs-3">🆕</b>
+              ) : isSynchronized ? (
+                <b className="ms-1 fs-5">✅</b>
+              ) : (
+                <b className="ms-1 fs-5">❌</b>
+              )}
             </p>
           </div>
         )}
@@ -846,7 +860,6 @@ function Dashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [areNewData, setNewDataAlert] = useState<boolean | null>(false);
 
-
   useEffect(() => {
     const token = localStorage.getItem("sessionToken");
 
@@ -894,7 +907,12 @@ function Dashboard() {
 
   return (
     <div className="dashboard" style={{ display: "flex", height: "100vh" }}>
-      <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} areNewData={areNewData} setNewDataAlert={setNewDataAlert}/>
+      <Sidebar
+        activeModule={activeModule}
+        setActiveModule={setActiveModule}
+        areNewData={areNewData}
+        setNewDataAlert={setNewDataAlert}
+      />
       <div
         className="main-content"
         style={{
