@@ -40,7 +40,6 @@ async function fetchModuleData(moduleId: number) {
   }
   const storedDataString = localStorage.getItem(`moduleData-${moduleId}`);
   const storedData = storedDataString ? JSON.parse(storedDataString) : [];
-  console.log(`X_moduleData-${moduleId}`, JSON.stringify(storedData));
 
   const serverResponse = await response.json();
   const newData = serverResponse.data || []; // Zajistí, že data bude minimálně prázdné pole
@@ -130,8 +129,9 @@ function Sidebar({
         const result = await fetchModuleData(activeModule);
         if (result === 1) setNewDataAlert(true);
         else setNewDataAlert(false);
+        setSynchronize(true);
         const syncInterval = setInterval(async () => {
-          if (isSynchronized !== true) {
+          if (isSynchronized === true) {
             let result = await syncModuleData(activeModule);
             if (result === 1) {
               setSynchronize(false);
@@ -186,7 +186,7 @@ function Sidebar({
             <p className="mt-2">
               Status:
               {areNewData ? (
-                <b className="ms-1 fs-3">🆕</b>
+                <b className="ms-1 fs-3">❗🆕❗</b>
               ) : isSynchronized ? (
                 <b className="ms-1 fs-5">✅</b>
               ) : (
@@ -344,6 +344,16 @@ function Notes() {
 
   const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
 
+  // Automatické přizpůsobení velikosti po vykreslení
+  useEffect(() => {
+    textAreaRefs.current.forEach((textarea) => {
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    });
+  }, [notes]);
+
   useEffect(() => {
     // Uloží poznámky do localStorage
     localStorage.setItem("moduleData-2", JSON.stringify(notes));
@@ -369,9 +379,9 @@ function Notes() {
     setNotes([...notes, newNote]);
   };
 
-  const autoResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    e.target.style.height = "auto"; // Reset výšky
-    e.target.style.height = `${e.target.scrollHeight}px`; // Nastavení na výšku obsahu
+  const autoResize = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = "auto"; // Reset výšky
+    textarea.style.height = `${textarea.scrollHeight}px`; // Nastavení na výšku obsahu
   };
 
   return (
@@ -384,7 +394,7 @@ function Notes() {
           value={note.text}
           onChange={(e) => {
             handleTextChange(index, e.target.value);
-            autoResize(e);
+            if (e.target) autoResize(e.target); // Zavolání autoResize s cílovým prvkem
           }}
           className="form-control"
           placeholder={`Poznámka ${index + 1}`}
