@@ -342,32 +342,38 @@ function Notes() {
     }
   });
 
-  const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
-
-  // Automatické přizpůsobení velikosti po vykreslení
-  useEffect(() => {
-    textAreaRefs.current.forEach((textarea) => {
-      if (textarea) {
-        textarea.style.height = "auto";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    });
-  }, [notes]);
+  const [draftNotes, setDraftNotes] = useState<any[]>(notes); // Lokální stav pro okamžité zobrazení textu během psaní
+  const timeoutRefs = useRef<{ [key: number]: number | null }>({});
 
   useEffect(() => {
-    // Uloží poznámky do localStorage
+    // Uloží poznámky do localStorage při aktualizaci
     localStorage.setItem("moduleData-2", JSON.stringify(notes));
   }, [notes]);
 
   const handleTextChange = (index: number, value: string) => {
-    const updatedNotes = [...notes];
-    updatedNotes[index] = {
-      ...updatedNotes[index],
+    const updatedDraftNotes = [...draftNotes];
+    updatedDraftNotes[index] = {
+      ...updatedDraftNotes[index],
       text: value,
-      edit: true, // Zaznamená úpravu poznámky
     };
 
-    setNotes(updatedNotes);
+    setDraftNotes(updatedDraftNotes); // Okamžitě zobrazí změny během psaní
+
+    if (timeoutRefs.current[index]) {
+      clearTimeout(timeoutRefs.current[index]!); // Zruší předchozí timeout, pokud existuje
+    }
+
+    timeoutRefs.current[index] = setTimeout(() => {
+      const updatedNotes = [...notes];
+      updatedNotes[index] = {
+        ...updatedNotes[index],
+        text: value,
+        edit: true, // Označí poznámku jako upravenou
+      };
+
+      setNotes(updatedNotes); // Aktualizuje hlavní poznámky až po 1 sekundě
+      timeoutRefs.current[index] = null; // Resetuje timeout
+    }, 1000); // 1 sekunda
   };
 
   const addNote = () => {
@@ -377,25 +383,17 @@ function Notes() {
       edit: false, // Nová poznámka není upravená
     };
     setNotes([...notes, newNote]);
-  };
-
-  const autoResize = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto"; // Reset výšky
-    textarea.style.height = `${textarea.scrollHeight}px`; // Nastavení na výšku obsahu
+    setDraftNotes([...draftNotes, newNote]);
   };
 
   return (
     <div style={{ padding: "2%", maxWidth: "60%", margin: "0 auto" }}>
       <h2>Poznámky</h2>
-      {notes.map((note: any, index: number) => (
+      {draftNotes.map((note: any, index: number) => (
         <textarea
           key={note.id}
-          ref={(el) => (textAreaRefs.current[index] = el)}
           value={note.text}
-          onChange={(e) => {
-            handleTextChange(index, e.target.value);
-            if (e.target) autoResize(e.target); // Zavolání autoResize s cílovým prvkem
-          }}
+          onChange={(e) => handleTextChange(index, e.target.value)}
           className="form-control"
           placeholder={`Poznámka ${index + 1}`}
           style={{
