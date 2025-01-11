@@ -10,7 +10,7 @@ const modules = [
   { id: 4, name: "Velká kniha pohádek", logo: "🧚" },
   { id: 5, name: "Bodová ohodnocení", logo: "🎁" },
   { id: 6, name: "Remainder", logo: "🔔" },
-  { id: 7, name: "Nastavení", logo: "⚙️"}
+  { id: 7, name: "Nastavení", logo: "⚙️" },
 ];
 
 async function fetchModuleData(moduleId: number) {
@@ -51,12 +51,12 @@ async function fetchModuleData(moduleId: number) {
   const sortedNewData = sortById([...newData]);
 
   if (JSON.stringify(sortedStoredData) !== JSON.stringify(sortedNewData)) {
-    // Update local storage with the fetched data
+    // update
     localStorage.setItem(`moduleData-${moduleId}`, JSON.stringify(newData));
     console.log(`moduleData-${moduleId}`, JSON.stringify(newData));
-    const normalizedStoredData = sortedStoredData.map((item : any) => ({
+    const normalizedStoredData = sortedStoredData.map((item: any) => ({
       ...item,
-      edit: false, // Všechny příznaky "edit" nastavíme na false
+      edit: false,
     }));
     if (JSON.stringify(normalizedStoredData) !== JSON.stringify(sortedNewData))
       return 1;
@@ -126,7 +126,7 @@ function Sidebar({
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isSynchronized, setSynchronize] = useState(true);
 
-   const [isSyncInProgress, setSyncInProgress] = useState(false); // Mutex pro blokaci více synchronizací
+  const [isSyncInProgress, setSyncInProgress] = useState(false); // mutex
 
   useEffect(() => {
     if (activeModule !== null) {
@@ -140,7 +140,7 @@ function Sidebar({
         setSynchronize(true);
 
         const syncLoop = async () => {
-          if (isSyncInProgress) return; // Pokud už běží synchronizace, ukonči další
+          if (isSyncInProgress) return; // race condition opatření
           setSyncInProgress(true);
 
           try {
@@ -160,20 +160,19 @@ function Sidebar({
             setSyncInProgress(false);
           }
 
-          // Další synchronizace po určitém čase
           setTimeout(syncLoop, 2000);
         };
 
-        syncLoop(); // Spusť první cyklus
+        syncLoop();
       };
 
       fetchDataAndSync();
     }
-  }, [activeModule]); // Odstranění závislosti na `isSynchronized`, aby se nespouštěly nové intervaly
+  }, [activeModule]);
 
   return (
     <div
-      className={`sidebar-container shadow-lg ${
+      className={`sidebar-container shadow ${
         isSidebarVisible ? "" : "collapsed"
       } bg-light position-relative`}
     >
@@ -315,7 +314,7 @@ function ToDo({ name }: ToDoProps) {
           +
         </button>
       </div>
-      <ul style={{ listStyleType: "none", padding: 0 }}>
+      <ul style={{ listStyleType: "none", padding: 0 }} className="my-2">
         {[...tasks]
           .filter((task) => task.text.trim() !== "") // Filtruje úkoly s neprázdným textem
           .sort((a, b) => Number(a.completed) - Number(b.completed))
@@ -324,6 +323,7 @@ function ToDo({ name }: ToDoProps) {
               key={task.id}
               style={{
                 display: "flex",
+                justifyContent: "flex-start",
                 alignItems: "center",
                 marginBottom: "5px",
                 marginTop: "5px",
@@ -337,7 +337,9 @@ function ToDo({ name }: ToDoProps) {
                 onChange={() => handleCheckboxChange(task.id)}
                 style={{ width: "20px", height: "20px", marginRight: "20px" }}
               />
-              <span style={{ fontSize: "18px" }}>{task.text}</span>
+              <span style={{ fontSize: "18px", textAlign: "left" }}>
+                {task.text}
+              </span>
             </li>
           ))}
       </ul>
@@ -408,8 +410,8 @@ function Notes() {
   const addNote = () => {
     const newNote = {
       id: Date.now(),
-      text: "", 
-      edit: false, 
+      text: "",
+      edit: false,
     };
     setNotes([...notes, newNote]);
     setDraftNotes([...draftNotes, newNote]);
@@ -421,7 +423,7 @@ function Notes() {
       {draftNotes.map((note: any, index: number) => (
         <textarea
           key={note.id}
-          ref={(el) => (textAreaRefs.current[index] = el)} 
+          ref={(el) => (textAreaRefs.current[index] = el)}
           value={note.text}
           onChange={(e) => handleTextChange(index, e.target.value)}
           className="form-control"
@@ -431,7 +433,7 @@ function Notes() {
             marginBottom: "10px",
             padding: "10px",
             fontSize: "16px",
-            resize: "none", 
+            resize: "none",
             overflow: "hidden",
           }}
         />
@@ -474,26 +476,37 @@ function Calendar() {
     "🧴": "yellow",
     "🤧": "blue",
     "🍊": "orange",
+    "♥": "red",
   };
 
   useEffect(() => {
     const today = new Date();
-    const start = new Date();
-    const end = new Date();
-    start.setDate(today.getDate() - 15);
-    end.setDate(today.getDate() + 15);
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 1. den měsíce
+    const lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    ); // Poslední den měsíce
+
+    const startPaddingDays = (firstDayOfMonth.getDay() + 6) % 7; // Zarovnání na pondělí (0 = pondělí)
 
     const generatedDays: Date[] = [];
-    let current = new Date(start);
-    while (current <= end) {
-      generatedDays.push(new Date(current));
-      current.setDate(current.getDate() + 1);
+
+    // Přidání prázdných buněk na začátku
+    for (let i = 0; i < startPaddingDays; i++) {
+      generatedDays.push(new Date(0)); // Falešné datum jako placeholder
+    }
+
+    // Přidání skutečných dnů měsíce
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      generatedDays.push(new Date(today.getFullYear(), today.getMonth(), day));
     }
 
     setDays(generatedDays);
   }, []);
 
   const isToday = (date: Date) => {
+    if (date.getTime() === 0) return false; // Ignorujeme placeholder dny
     const today = new Date();
     return (
       date.getDate() === today.getDate() &&
@@ -503,6 +516,7 @@ function Calendar() {
   };
 
   const handleDayClick = (day: Date) => {
+    if (day.getTime() === 0) return; // Kliknutí na placeholder dny se ignoruje
     const dayKey = day.toISOString().split("T")[0];
     setSelectedDay(dayKey);
     const existingEntry = calendarData.find((entry) => entry.id === dayKey);
@@ -535,83 +549,108 @@ function Calendar() {
   };
 
   return (
-    <div className="container my-4" style={{ padding: "0.5%" }}>
-      <h2 className="text-center mb-4">Kalendář</h2>
+    <div className="container my-4">
+      <h2 className="text-center mb-4">
+        Kalendář {" "}
+        <img
+          src="pejsek.png"
+          className="img-fluid"
+          alt="Pejsek"
+          style={{
+            display: "inline-block",
+            width: "1.6em",
+            height: "1.6em",
+            verticalAlign: "middle"
+          }}
+        />
+      </h2>
       <div
-        className="d-grid gap-3"
+        className="d-grid gap-2"
         style={{
           gridTemplateColumns: "repeat(7, 1fr)",
           display: "grid",
         }}
       >
-        {days.map((day, index) => {
-          const dayKey = day.toISOString().split("T")[0];
-          const symbolsForDay =
-            calendarData.find((entry) => entry.id === dayKey)?.text || [];
-
-          return (
-            <button
-              key={index}
-              className={`btn text-center ${
-                isToday(day)
-                  ? "btn-primary text-white"
-                  : "btn-outline-secondary"
-              }`}
-              style={{
-                padding: "15px",
-                minHeight: "120px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-              onClick={() => handleDayClick(day)}
-            >
-              <div className="fw-bold mb-2">
-                {day.toLocaleDateString("cs-CZ", {
-                  weekday: "short",
-                  day: "2-digit",
-                  month: "2-digit",
-                })}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexWrap: "wrap",
-                  gap: "2px",
-                }}
-              >
-                {Array(7)
-                  .fill(null)
-                  .map((_, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        color: symbolColors[symbolsForDay[idx]] || "inherit",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                      }}
-                    >
-                      {symbolsForDay[idx] || "\u00A0" /* Mezera */}
-                    </span>
-                  ))}
-              </div>
-            </button>
-          );
-        })}
+        {days.map((day, index) => (
+          <button
+            key={index}
+            className={`btn text-center shadow-sm ${
+              isToday(day)
+                ? "btn-primary text-white"
+                : day.getTime() === 0
+                ? "btn-light border-0"
+                : "btn-outline-secondary text-dark"
+            }`}
+            style={{
+              padding: "10%",
+              minHeight: "120px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              visibility: day.getTime() === 0 ? "hidden" : "visible",
+            }}
+            onClick={() => handleDayClick(day)}
+          >
+            {day.getTime() !== 0 && (
+              <>
+                <div className="fw-bold small mb-2 text-uppercase">
+                  {day.toLocaleDateString("cs-CZ", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "2-digit",
+                  })}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    gap: "2px",
+                  }}
+                >
+                  {Array(7)
+                    .fill(null)
+                    .map((_, idx) => (
+                      <span
+                        key={idx}
+                        className="fs-6"
+                        style={{
+                          color:
+                            symbolColors[
+                              calendarData.find(
+                                (entry) =>
+                                  entry.id === day.toISOString().split("T")[0]
+                              )?.text[idx] || ""
+                            ] || "inherit",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {
+                          calendarData.find(
+                            (entry) =>
+                              entry.id === day.toISOString().split("T")[0]
+                          )?.text[idx] /* Mezera */
+                        }
+                      </span>
+                    ))}
+                </div>
+              </>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Modální okno */}
       <div
         id="symbolModal"
         className="modal"
-        style={{ display: "none", position: "fixed", zIndex: 1050 }}
+        style={{ display: "none", position: "fixed" }}
       >
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Vyberte symboly</h5>
+            <div className="modal-header bg-primary text-white">
+              <h5 className="modal-title">Vyber symboly</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -621,14 +660,14 @@ function Calendar() {
                 }
               ></button>
             </div>
-            <div className="modal-body">
-              <div className="d-flex flex-wrap gap-2">
+            <div className="modal-body bg-light">
+              <div className="d-flex flex-wrap gap-3 justify-content-center">
                 {symbols.map((symbol) => (
                   <button
                     key={symbol}
-                    className={`btn ${
+                    className={`btn fs-5 ${
                       selectedSymbols.includes(symbol)
-                        ? "btn-primary"
+                        ? "btn-primary shadow"
                         : "btn-outline-secondary"
                     }`}
                     style={{ color: symbolColors[symbol] }}
@@ -639,7 +678,7 @@ function Calendar() {
                 ))}
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer bg-light">
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -894,13 +933,25 @@ function Tales() {
 }
 
 function Settings() {
+  // dark mode
+  // změna primary color bootstrap
+  // změna hesla
+  // odhlásit ze všech relací
+  // změna fontu
+  // statistika
+  // counter splněných úkolů na tomto zařízení
+  // counter udělaných pejskovo prodecur na tomto zařízení
+  // counter přečtených pohádek
+  // counter přidaných/odebraných bodů na tomto zařízení
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const storedMode = localStorage.getItem("darkMode");
     return storedMode === "true";
   });
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [passwordChangeMessage, setPasswordChangeMessage] = useState<string | null>(null);
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState<
+    string | null
+  >(null);
 
   // Toggle dark mode and store preference
   const handleDarkModeToggle = () => {
@@ -941,7 +992,11 @@ function Settings() {
   }, [darkMode]);
 
   return (
-    <div className={`container py-4 ${darkMode ? "bg-dark text-light" : "bg-white text-dark"}`}>
+    <div
+      className={`container py-4 ${
+        darkMode ? "bg-dark text-light" : "bg-white text-dark"
+      }`}
+    >
       <h2 className="text-center">Nastavení</h2>
       <div className="mb-4">
         <h5>Dark Mode</h5>
@@ -963,7 +1018,9 @@ function Settings() {
         <div className="mb-2">
           <input
             type="password"
-            className={`form-control ${darkMode ? "bg-dark text-light border-secondary" : ""}`}
+            className={`form-control ${
+              darkMode ? "bg-dark text-light border-secondary" : ""
+            }`}
             placeholder="Nové heslo"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -972,13 +1029,18 @@ function Settings() {
         <div className="mb-2">
           <input
             type="password"
-            className={`form-control ${darkMode ? "bg-dark text-light border-secondary" : ""}`}
+            className={`form-control ${
+              darkMode ? "bg-dark text-light border-secondary" : ""
+            }`}
             placeholder="Potvrzení hesla"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
-        <button className="btn btn-primary w-100" onClick={handleChangePassword}>
+        <button
+          className="btn btn-primary w-100"
+          onClick={handleChangePassword}
+        >
           Změnit heslo
         </button>
         {passwordChangeMessage && (
