@@ -322,7 +322,9 @@ function ToDo({ name }: ToDoProps) {
             <li
               key={task.id}
               className={`list-group-item d-flex align-items-center justify-content-start hover-none ${
-                task.completed ? "text-muted text-decoration-line-through hover-none" : ""
+                task.completed
+                  ? "text-muted text-decoration-line-through hover-none"
+                  : ""
               }`}
             >
               <div className="d-flex align-items-center gap-3">
@@ -332,7 +334,9 @@ function ToDo({ name }: ToDoProps) {
                   onChange={() => handleCheckboxChange(task.id)}
                   className="form-check-input fs-5"
                 />
-                <span className="text-start" style={{ fontSize: "1.1525rem" }}>{task.text}</span>
+                <span className="text-start" style={{ fontSize: "1.1525rem" }}>
+                  {task.text}
+                </span>
               </div>
             </li>
           ))}
@@ -412,7 +416,14 @@ function Notes() {
   };
 
   return (
-    <div style={{ padding: "2%", maxWidth: "60%", margin: "0 auto" }}>
+    <div
+      style={{
+        padding: "2%",
+        minWidth: "300px",
+        maxWidth: "800px",
+        margin: "0 auto",
+      }}
+    >
       <h2>Poznámky</h2>
       {draftNotes.map((note: any, index: number) => (
         <textarea
@@ -980,7 +991,6 @@ function Settings() {
   };
 
   useEffect(() => {
-    // Apply initial dark mode preference
     if (darkMode) {
       document.body.classList.add("bg-dark", "text-light");
     }
@@ -992,48 +1002,57 @@ function Settings() {
         darkMode ? "bg-dark text-light" : "bg-white text-dark"
       }`}
     >
-      <h2 className="text-center">Nastavení</h2>
       <div className="mb-4">
-        <h5>Dark Mode</h5>
-        <div className="form-check form-switch">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            id="darkModeSwitch"
-            checked={darkMode}
-            onChange={handleDarkModeToggle}
-          />
-          <label className="form-check-label" htmlFor="darkModeSwitch">
-            {darkMode ? "Zapnuto" : "Vypnuto"}
-          </label>
+        <h1 className="text-primary font-weight-bold mb-0">Vzhled</h1>
+        <hr className="mb-4" />
+        <div className="border border-primary rounded px-3 py-3 mb-3">
+          <h2>Dark Mode</h2>
+          <div className="form-check form-switch mb-2 fs-4">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="darkModeSwitch"
+              checked={darkMode}
+              onChange={handleDarkModeToggle}
+            />
+            <label className="form-check-label" htmlFor="darkModeSwitch">
+              {darkMode ? "Zapnuto" : "Vypnuto"}
+            </label>
+          </div>
+        </div>
+        <div className="border border-primary rounded px-3 py-3">
+          <h2>Změna barev</h2>
+          <h4 className="bg-primary rounded px-2 py-1">Primární</h4>
+          <h4 className="bg-secondary rounded px-2 py-1">Sekundární</h4>
+          <h4 className="bg-success rounded px-2 py-1">Úspěšně</h4>
+          <h4 className="bg-danger rounded px-2 py-1">Chyba</h4>
+          <h4 className="bg-warning rounded px-2 py-1">Varování</h4>
         </div>
       </div>
-      <div className="mb-4">
-        <h5>Změna hesla</h5>
+      <h1 className="text-primary font-weight-bold mb-0 mt-4">Bezpečnost</h1>
+      <hr className="mb-4" />
+      <div className="border border-primary rounded px-3 py-3 mb-3">
+        <h2>Změna hesla</h2>
         <div className="mb-2">
           <input
             type="password"
-            className={`form-control ${
-              darkMode ? "bg-dark text-light border-secondary" : ""
-            }`}
+            className="form-control"
             placeholder="Nové heslo"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
         </div>
-        <div className="mb-2">
+        <div className="mb-3">
           <input
             type="password"
-            className={`form-control ${
-              darkMode ? "bg-dark text-light border-secondary" : ""
-            }`}
+            className="form-control"
             placeholder="Potvrzení hesla"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
         <button
-          className="btn btn-primary w-100"
+          className="btn btn-primary w-100 mb-2"
           onClick={handleChangePassword}
         >
           Změnit heslo
@@ -1041,6 +1060,33 @@ function Settings() {
         {passwordChangeMessage && (
           <div className="mt-3 alert alert-info">{passwordChangeMessage}</div>
         )}
+      </div>
+      <div className="border border-primary rounded px-3 py-3 mb-3">
+        <h2>Odhlásit ze všech relací</h2>
+        <button
+          className="btn btn-primary w-100 mb-2"
+          onClick={handleChangePassword}
+        >
+          Smazat všechny sessions ze všech zařízení včetně tohoto
+        </button>
+      </div>
+
+      <h1 className="text-primary font-weight-bold mb-0 mt-4">Statistika</h1>
+      <hr className="mb-4" />
+      <div className="border border-primary rounded px-3 py-3">
+        <p>
+          Počet splněných úkolů Anička: {" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> a Pepíček:{" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> <br />
+          Počet dokonaných pejskovo procedur:{" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> <br />
+          Počet přečtených pohádek na tomto zařízení:{" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> <br />
+          Počet dohromady přečtených pohádek:{" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> <br />
+          Počet přidaných/odebraných bodů na tomto zařízení:{" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> <br />
+        </p>
       </div>
     </div>
   );
