@@ -10,13 +10,14 @@ const modules = [
   { id: 4, name: "Velká kniha pohádek", logo: "🧚" },
   { id: 5, name: "Bodová ohodnocení", logo: "🎁" },
   { id: 6, name: "Remainder", logo: "🔔" },
+  { id: 7, name: "Nastavení", logo: "⚙️"}
 ];
 
 async function fetchModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
   if (!token) {
-    window.location.href = "/";
+    window.location.href = "/centrum/";
     return 0;
   }
 
@@ -33,7 +34,7 @@ async function fetchModuleData(moduleId: number) {
   if (!response.ok) {
     if (![400, 404, 500].includes(response.status)) {
       localStorage.removeItem("sessionToken");
-      window.location.href = "/";
+      window.location.href = "/centrum/";
     }
     console.error(`Fetch error: ${response.statusText}`);
     return 0;
@@ -42,20 +43,24 @@ async function fetchModuleData(moduleId: number) {
   const storedData = storedDataString ? JSON.parse(storedDataString) : [];
 
   const serverResponse = await response.json();
-  const newData = serverResponse.data || []; // Zajistí, že data bude minimálně prázdné pole
+  const newData = serverResponse.data || [];
 
-  // Funkce pro seřazení pole podle "id"
   const sortById = (array: any) => array.sort((a: any, b: any) => a.id - b.id);
 
-  // Seřazení obou datových sad
-  const sortedStoredData = sortById([...storedData]); // Klonuje a seřadí
+  const sortedStoredData = sortById([...storedData]);
   const sortedNewData = sortById([...newData]);
 
   if (JSON.stringify(sortedStoredData) !== JSON.stringify(sortedNewData)) {
     // Update local storage with the fetched data
     localStorage.setItem(`moduleData-${moduleId}`, JSON.stringify(newData));
     console.log(`moduleData-${moduleId}`, JSON.stringify(newData));
-    return 1;
+    const normalizedStoredData = sortedStoredData.map((item : any) => ({
+      ...item,
+      edit: false, // Všechny příznaky "edit" nastavíme na false
+    }));
+    if (JSON.stringify(normalizedStoredData) !== JSON.stringify(sortedNewData))
+      return 1;
+    return 0;
   }
   return 0;
 }
@@ -64,7 +69,7 @@ async function syncModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
   if (!token) {
-    window.location.href = "/";
+    window.location.href = "/centrum/";
     return 0;
   }
 
@@ -95,7 +100,7 @@ async function syncModuleData(moduleId: number) {
 
   if (!response.ok) {
     localStorage.removeItem("sessionToken");
-    window.location.href = "/";
+    window.location.href = "/centrum/";
     return 0;
   }
 
@@ -121,82 +126,94 @@ function Sidebar({
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isSynchronized, setSynchronize] = useState(true);
 
-  // fetch when change
-  // sync interval
+   const [isSyncInProgress, setSyncInProgress] = useState(false); // Mutex pro blokaci více synchronizací
+
   useEffect(() => {
     if (activeModule !== null) {
       const fetchDataAndSync = async () => {
         const result = await fetchModuleData(activeModule);
-        if (result === 1) setNewDataAlert(true);
-        else setNewDataAlert(false);
+        if (result === 1) {
+          setNewDataAlert(true);
+        } else {
+          setNewDataAlert(false);
+        }
         setSynchronize(true);
-        const syncInterval = setInterval(async () => {
-          if (isSynchronized === true) {
-            let result = await syncModuleData(activeModule);
-            if (result === 1) {
-              setSynchronize(false);
-              result = await fetchModuleData(activeModule);
-              if (result !== 1) {
-                setNewDataAlert(true);
-              } else {
-                setSynchronize(true);
+
+        const syncLoop = async () => {
+          if (isSyncInProgress) return; // Pokud už běží synchronizace, ukonči další
+          setSyncInProgress(true);
+
+          try {
+            if (isSynchronized) {
+              let result = await syncModuleData(activeModule);
+              if (result === 1) {
+                setSynchronize(false);
+                result = await fetchModuleData(activeModule);
+                if (result !== 0) {
+                  setNewDataAlert(true);
+                } else {
+                  setSynchronize(true);
+                }
               }
             }
+          } finally {
+            setSyncInProgress(false);
           }
-        }, 1000);
 
-        // Vyčištění při odmountování komponenty
-        return () => clearInterval(syncInterval);
+          // Další synchronizace po určitém čase
+          setTimeout(syncLoop, 2000);
+        };
+
+        syncLoop(); // Spusť první cyklus
       };
 
       fetchDataAndSync();
     }
-  }, [activeModule, isSynchronized]);
+  }, [activeModule]); // Odstranění závislosti na `isSynchronized`, aby se nespouštěly nové intervaly
 
   return (
-    <>
-      <div
-        className={`sidebar-container ${
-          isSidebarVisible ? "" : "collapsed"
-        } bg-light`}
-        style={{ height: "100vh" }}
+    <div
+      className={`sidebar-container shadow-lg ${
+        isSidebarVisible ? "" : "collapsed"
+      } bg-light position-relative`}
+    >
+      <button
+        className="toggle-button btn btn-primary fw-bold py-2 px-3"
+        onClick={() => setSidebarVisible(!isSidebarVisible)}
       >
-        <button
-          className="toggle-button btn btn-primary"
-          onClick={() => setSidebarVisible(!isSidebarVisible)}
-        >
-          {isSidebarVisible ? "<-" : "->"}
-        </button>
-        {isSidebarVisible && (
-          <div className="sidebar">
-            <div className="list-group">
-              {modules.map((module) => (
-                <button
-                  key={module.id}
-                  className={`list-group-item list-group-item-action ${
-                    activeModule === module.id ? "active active-primary" : ""
-                  }`}
-                  onClick={() => setActiveModule(module.id)}
-                >
-                  <span className="me-2">{module.logo}</span>
-                  {module.name}
-                </button>
-              ))}
-            </div>
-            <p className="mt-2">
-              Status:
+        {isSidebarVisible ? "⬅" : "➡"}
+      </button>
+      {isSidebarVisible && (
+        <div className="sidebar p-3">
+          <div className="list-group">
+            {modules.map((module) => (
+              <button
+                key={module.id}
+                className={`list-group-item list-group-item-action d-flex align-items-center ${
+                  activeModule === module.id ? "active" : ""
+                }`}
+                onClick={() => setActiveModule(module.id)}
+              >
+                <span className="me-2 fs-5">{module.logo}</span>
+                <span className="fs-5">{module.name}</span>
+              </button>
+            ))}
+          </div>
+          <div className="status-section mt-3 text-center">
+            <p className="fw-semibold">
+              <span className="text-muted">Status:</span>{" "}
               {areNewData ? (
-                <b className="ms-1 fs-3">❗🆕❗</b>
+                <span className="badge bg-warning text-dark fs-5">🆕</span>
               ) : isSynchronized ? (
-                <b className="ms-1 fs-5">✅</b>
+                <span className="badge bg-success fs-5">✅</span>
               ) : (
-                <b className="ms-1 fs-5">❌</b>
+                <span className="badge bg-danger fs-5">❌</span>
               )}
             </p>
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -390,9 +407,9 @@ function Notes() {
 
   const addNote = () => {
     const newNote = {
-      id: Date.now(), // Unikátní ID pro poznámku
-      text: "", // Výchozí text
-      edit: false, // Nová poznámka není upravená
+      id: Date.now(),
+      text: "", 
+      edit: false, 
     };
     setNotes([...notes, newNote]);
     setDraftNotes([...draftNotes, newNote]);
@@ -404,7 +421,7 @@ function Notes() {
       {draftNotes.map((note: any, index: number) => (
         <textarea
           key={note.id}
-          ref={(el) => (textAreaRefs.current[index] = el)} // Uložení referencí na textarea
+          ref={(el) => (textAreaRefs.current[index] = el)} 
           value={note.text}
           onChange={(e) => handleTextChange(index, e.target.value)}
           className="form-control"
@@ -414,8 +431,8 @@ function Notes() {
             marginBottom: "10px",
             padding: "10px",
             fontSize: "16px",
-            resize: "none", // Zakázání manuální změny velikosti
-            overflow: "hidden", // Skrytí posuvníků
+            resize: "none", 
+            overflow: "hidden",
           }}
         />
       ))}
@@ -876,6 +893,102 @@ function Tales() {
   );
 }
 
+function Settings() {
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const storedMode = localStorage.getItem("darkMode");
+    return storedMode === "true";
+  });
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState<string | null>(null);
+
+  // Toggle dark mode and store preference
+  const handleDarkModeToggle = () => {
+    setDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      localStorage.setItem("darkMode", newMode.toString());
+      document.body.classList.toggle("bg-dark", newMode);
+      document.body.classList.toggle("text-light", newMode);
+      return newMode;
+    });
+  };
+
+  // Change password function
+  const handleChangePassword = () => {
+    if (!newPassword || !confirmPassword) {
+      setPasswordChangeMessage("Vyplňte obě pole.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordChangeMessage("Hesla se neshodují.");
+      return;
+    }
+
+    setPasswordChangeMessage("Probíhá změna hesla...");
+    setTimeout(() => {
+      setPasswordChangeMessage("Heslo bylo úspěšně změněno.");
+      setNewPassword("");
+      setConfirmPassword("");
+    }, 1000);
+  };
+
+  useEffect(() => {
+    // Apply initial dark mode preference
+    if (darkMode) {
+      document.body.classList.add("bg-dark", "text-light");
+    }
+  }, [darkMode]);
+
+  return (
+    <div className={`container py-4 ${darkMode ? "bg-dark text-light" : "bg-white text-dark"}`}>
+      <h2 className="text-center">Nastavení</h2>
+      <div className="mb-4">
+        <h5>Dark Mode</h5>
+        <div className="form-check form-switch">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="darkModeSwitch"
+            checked={darkMode}
+            onChange={handleDarkModeToggle}
+          />
+          <label className="form-check-label" htmlFor="darkModeSwitch">
+            {darkMode ? "Zapnuto" : "Vypnuto"}
+          </label>
+        </div>
+      </div>
+      <div className="mb-4">
+        <h5>Změna hesla</h5>
+        <div className="mb-2">
+          <input
+            type="password"
+            className={`form-control ${darkMode ? "bg-dark text-light border-secondary" : ""}`}
+            placeholder="Nové heslo"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+        </div>
+        <div className="mb-2">
+          <input
+            type="password"
+            className={`form-control ${darkMode ? "bg-dark text-light border-secondary" : ""}`}
+            placeholder="Potvrzení hesla"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+        <button className="btn btn-primary w-100" onClick={handleChangePassword}>
+          Změnit heslo
+        </button>
+        {passwordChangeMessage && (
+          <div className="mt-3 alert alert-info">{passwordChangeMessage}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const [activeModule, setActiveModule] = useState<number | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -885,7 +998,7 @@ function Dashboard() {
     const token = localStorage.getItem("sessionToken");
 
     if (!token) {
-      window.location.href = "/";
+      window.location.href = "/centrum/";
       return;
     }
 
@@ -910,7 +1023,7 @@ function Dashboard() {
       })
       .catch(() => {
         localStorage.removeItem("sessionToken");
-        window.location.href = "/";
+        window.location.href = "/centrum/";
       });
   }, []);
 
@@ -1007,6 +1120,7 @@ function Dashboard() {
           </div>
         ) : null}
         {activeModule === 6 ? "TBD" : null}
+        {activeModule === 7 ? <Settings /> : null}
       </div>
     </div>
   );
