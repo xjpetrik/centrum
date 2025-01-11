@@ -314,37 +314,31 @@ function ToDo({ name }: ToDoProps) {
           +
         </button>
       </div>
-      <ul style={{ listStyleType: "none", padding: 0 }} className="my-2">
+      <ul className="list-group my-1">
         {[...tasks]
           .filter((task) => task.text.trim() !== "") // Filtruje úkoly s neprázdným textem
           .sort((a, b) => Number(a.completed) - Number(b.completed))
           .map((task) => (
             <li
               key={task.id}
-              style={{
-                display: "flex",
-                justifyContent: "flex-start",
-                alignItems: "center",
-                marginBottom: "5px",
-                marginTop: "5px",
-                textDecoration: task.completed ? "line-through" : "none",
-                color: task.completed ? "gray" : "black",
-              }}
+              className={`list-group-item d-flex align-items-center justify-content-start hover-none ${
+                task.completed ? "text-muted text-decoration-line-through hover-none" : ""
+              }`}
             >
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() => handleCheckboxChange(task.id)}
-                style={{ width: "20px", height: "20px", marginRight: "20px" }}
-              />
-              <span style={{ fontSize: "18px", textAlign: "left" }}>
-                {task.text}
-              </span>
+              <div className="d-flex align-items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => handleCheckboxChange(task.id)}
+                  className="form-check-input fs-5"
+                />
+                <span className="text-start" style={{ fontSize: "1.1525rem" }}>{task.text}</span>
+              </div>
             </li>
           ))}
       </ul>
-      <button className="btn btn-secondary" onClick={removeCompletedTasks}>
-        Smazat hotové
+      <button className="btn btn-secondary mt-3" onClick={removeCompletedTasks}>
+        Smazat hotové úkoly
       </button>
     </div>
   );
@@ -551,7 +545,7 @@ function Calendar() {
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">
-        Kalendář {" "}
+        Kalendář{" "}
         <img
           src="pejsek.png"
           className="img-fluid"
@@ -560,7 +554,7 @@ function Calendar() {
             display: "inline-block",
             width: "1.6em",
             height: "1.6em",
-            verticalAlign: "middle"
+            verticalAlign: "middle",
           }}
         />
       </h2>
@@ -584,6 +578,7 @@ function Calendar() {
             style={{
               padding: "10%",
               minHeight: "120px",
+              minWidth: "42px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",

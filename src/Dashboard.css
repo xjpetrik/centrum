@@ -71,3 +71,7 @@ sidebar-container {
     min-width: 50px;
   }
 }
+.hover-none:hover {
+  background-color: inherit !important;
+  color: inherit !important;
+}
