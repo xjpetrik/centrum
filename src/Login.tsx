@@ -26,7 +26,7 @@ const Login: React.FC = () => {
 
             if (response.ok) {
                 localStorage.setItem("sessionToken", data.token);
-                window.location.href = "/centrum/"; // Přesměrování na dashboard
+                window.location.href = "/centrum/"; 
             } else {
                 setError(data.error || "Login failed");
             }

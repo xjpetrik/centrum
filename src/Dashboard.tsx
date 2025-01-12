@@ -977,10 +977,6 @@ function Settings() {
   // counter udělaných pejskovo prodecur na tomto zařízení
   // counter přečtených pohádek
   // counter přidaných/odebraných bodů na tomto zařízení
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const storedMode = localStorage.getItem("darkMode");
-    return storedMode === "true";
-  });
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [passwordChangeMessage, setPasswordChangeMessage] = useState<
@@ -989,16 +985,18 @@ function Settings() {
   const [colorChangeMessage, setColorChangeMessage] = useState<string | null>(
     null
   );
+  const [darkMode, setDarkMode] = useState(localStorage.getItem("darkMode"));
 
   // Toggle dark mode and store preference
   const handleDarkModeToggle = () => {
-    setDarkMode((prevMode) => {
-      const newMode = !prevMode;
-      localStorage.setItem("darkMode", newMode.toString());
-      document.body.classList.toggle("bg-dark", newMode);
-      document.body.classList.toggle("text-light", newMode);
-      return newMode;
-    });
+    let currentTheme = document.body.getAttribute("data-bs-theme");
+    currentTheme = (currentTheme === "nodark") ? "dark" : "nodark"
+    document.body.setAttribute(
+      "data-bs-theme",
+    currentTheme
+  );
+  setDarkMode(currentTheme);
+  localStorage.setItem("darkMode", currentTheme);
   };
 
   // Change password function
@@ -1026,17 +1024,8 @@ function Settings() {
     setColorChangeMessage("Barvy úspěšně změněny!");
   };
 
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("bg-dark", "text-light");
-    }
-  }, [darkMode]);
-
   return (
     <div
-      className={`container py-4 ${
-        darkMode ? "bg-dark text-light" : "bg-white text-dark"
-      }`}
     >
       <div className="mb-4">
         <h1 className="text-primary font-weight-bold mb-0">Vzhled</h1>
@@ -1048,11 +1037,10 @@ function Settings() {
               className="form-check-input"
               type="checkbox"
               id="darkModeSwitch"
-              checked={darkMode}
               onChange={handleDarkModeToggle}
             />
             <label className="form-check-label" htmlFor="darkModeSwitch">
-              {darkMode ? "Zapnuto" : "Vypnuto"}
+              {darkMode === "dark" ? "Zapnuto ": "Vypnuto"}
             </label>
           </div>
         </div>
@@ -1096,6 +1084,8 @@ function Settings() {
           <button onClick={handleSaveColors} className="btn btn-primary">
             Uložit barvy
           </button>
+          {colorChangeMessage && (<div className="mt-3 alert alert-info">{colorChangeMessage}</div>
+        )}
         </div>
       </div>
       <h1 className="text-primary font-weight-bold mb-0 mt-4">Bezpečnost</h1>

@@ -8,7 +8,7 @@ sidebar-container {
 }
 
 .sidebar-container.collapsed {
-  width: 3%;
+  width: 0%;
 }
 
 .toggle-button {
@@ -39,7 +39,8 @@ sidebar-container {
 }
 
 .list-group-item:hover {
-  background-color: #e9ecef;
+  background-color: var(--bs-primary);
+  color:#f8f9fa;
 }
 
 .list-group-item.active {
@@ -56,6 +57,14 @@ sidebar-container {
 .status-section .badge {
   padding: 10px 15px;
   font-size: 16px;
+}
+
+[data-bs-theme="dark"] .sidebar {
+  background-color: #000000 !important;
+}
+
+[data-bs-theme="dark"] .sidebar-container {
+  background-color: #000000 !important;
 }
 
 @media (max-width: 768px) {
@@ -126,7 +135,6 @@ sidebar-container {
   color: rgba(var(--bs-secondary-rgb), 1) !important;
 }
 
-/* Disabled stav outline tlačítka */
 .btn-outline-secondary:disabled {
   background-color: transparent !important;
   border-color: rgba(var(--bs-secondary-rgb), 0.5) !important;
