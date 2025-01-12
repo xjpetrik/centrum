@@ -13,6 +13,34 @@ const modules = [
   { id: 7, name: "Nastavení", logo: "⚙️" },
 ];
 
+let colorsList: Record<string, { hexColor: string }> = {};
+
+const loadColors = () => {
+  const savedColors = localStorage.getItem("prefColors");
+  if (!savedColors) return;
+  colorsList = JSON.parse(savedColors);
+  for (const [colorType, { hexColor }] of Object.entries(colorsList)) {
+    setNewColor(colorType, hexColor);
+  }
+};
+
+const hexToRgb = (hex: string) => {
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r}, ${g}, ${b}`;
+};
+
+const setNewColor = (colorType: string, hexColor: string) => {
+  document.documentElement.style.setProperty(colorType, hexColor); // btns
+  document.documentElement.style.setProperty(
+    `${colorType}-rgb`,
+    hexToRgb(hexColor)
+  ); // txt
+  colorsList[colorType] = { hexColor };
+};
+
 async function fetchModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
 
@@ -583,7 +611,7 @@ function Calendar() {
               isToday(day)
                 ? "btn-primary text-white"
                 : day.getTime() === 0
-                ? "btn-light border-0"
+                ? "btn-secondary border-0"
                 : "btn-outline-secondary text-dark"
             }`}
             style={{
@@ -958,6 +986,9 @@ function Settings() {
   const [passwordChangeMessage, setPasswordChangeMessage] = useState<
     string | null
   >(null);
+  const [colorChangeMessage, setColorChangeMessage] = useState<string | null>(
+    null
+  );
 
   // Toggle dark mode and store preference
   const handleDarkModeToggle = () => {
@@ -988,6 +1019,11 @@ function Settings() {
       setNewPassword("");
       setConfirmPassword("");
     }, 1000);
+  };
+
+  const handleSaveColors = () => {
+    localStorage.setItem("prefColors", JSON.stringify(colorsList));
+    setColorChangeMessage("Barvy úspěšně změněny!");
   };
 
   useEffect(() => {
@@ -1023,10 +1059,43 @@ function Settings() {
         <div className="border border-primary rounded px-3 py-3">
           <h2>Změna barev</h2>
           <h4 className="bg-primary rounded px-2 py-1">Primární</h4>
+          <input
+            type="color"
+            onChange={(e) => setNewColor("--bs-primary", e.target.value)}
+            value={colorsList["--bs-primary"]?.hexColor || "#007bff"} // Výchozí modrá barva
+            className="input-group input-group-sm mb-3"
+          />
           <h4 className="bg-secondary rounded px-2 py-1">Sekundární</h4>
+          <input
+            type="color"
+            onChange={(e) => setNewColor("--bs-secondary", e.target.value)}
+            value={colorsList["--bs-secondary"]?.hexColor || "#6c757d"} // Výchozí šedá barva
+            className="input-group input-group-sm mb-3"
+          />
           <h4 className="bg-success rounded px-2 py-1">Úspěšně</h4>
+          <input
+            type="color"
+            onChange={(e) => setNewColor("--bs-success", e.target.value)}
+            value={colorsList["--bs-success"]?.hexColor || "#28a745"} // Výchozí zelená barva
+            className="input-group input-group-sm mb-3"
+          />
           <h4 className="bg-danger rounded px-2 py-1">Chyba</h4>
+          <input
+            type="color"
+            onChange={(e) => setNewColor("--bs-danger", e.target.value)}
+            value={colorsList["--bs-danger"]?.hexColor || "#dc3545"} // Výchozí červená barva
+            className="input-group input-group-sm mb-3"
+          />
           <h4 className="bg-warning rounded px-2 py-1">Varování</h4>
+          <input
+            type="color"
+            onChange={(e) => setNewColor("--bs-warning", e.target.value)}
+            value={colorsList["--bs-warning"]?.hexColor || "#ffc107"} // Výchozí žlutá barva
+            className="input-group input-group-sm mb-3"
+          />
+          <button onClick={handleSaveColors} className="btn btn-primary">
+            Uložit barvy
+          </button>
         </div>
       </div>
       <h1 className="text-primary font-weight-bold mb-0 mt-4">Bezpečnost</h1>
@@ -1075,9 +1144,10 @@ function Settings() {
       <hr className="mb-4" />
       <div className="border border-primary rounded px-3 py-3">
         <p>
-          Počet splněných úkolů Anička: {" "}
-          <span className="badge bg-primary text-dark fs-6">666</span> a Pepíček:{" "}
-          <span className="badge bg-primary text-dark fs-6">666</span> <br />
+          Počet splněných úkolů Anička:{" "}
+          <span className="badge bg-primary text-dark fs-6">666</span> a
+          Pepíček: <span className="badge bg-primary text-dark fs-6">666</span>{" "}
+          <br />
           Počet dokonaných pejskovo procedur:{" "}
           <span className="badge bg-primary text-dark fs-6">666</span> <br />
           Počet přečtených pohádek na tomto zařízení:{" "}
@@ -1141,6 +1211,8 @@ function Dashboard() {
   if (!isAuthenticated) {
     return null;
   }
+
+  loadColors();
 
   return (
     <div className="dashboard" style={{ display: "flex", height: "100vh" }}>
