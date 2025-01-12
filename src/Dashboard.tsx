@@ -891,80 +891,193 @@ function Points({ name }: PointsProps) {
 }
 
 interface Tale {
+  id: string;
   name: string;
-  preview: string;
+  title: string;
+  text: string;
+  edit: boolean;
 }
 
-function Tales() {
+const Tales = () => {
   const [tales, setTales] = useState<Tale[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newTale, setNewTale] = useState({ name: "", title: "", text: "" });
 
+  // Načtení dat z localStorage při spuštění
   useEffect(() => {
-    const fetchTales = async () => {
+    const storedData = localStorage.getItem("moduleData-4");
+    if (storedData) {
       try {
-        // Fetching the list of files from the /public/tales directory (requires API or predefined list)
-        const response = await fetch("/tales/manifest.json");
-        const data: Tale[] = await response.json();
-        setTales(data);
+        setTales(JSON.parse(storedData));
       } catch (error) {
-        console.error("Failed to load tales", error);
+        console.error("Failed to parse tales data:", error);
+        setTales([]);
       }
-    };
-
-    fetchTales();
+    }
   }, []);
 
-  const handleTaleClick = async (name: string) => {
-    try {
-      const response = await fetch(`/tales/${name}.txt`);
-      const text = await response.text();
+  // Funkce pro zobrazení obsahu pohádky
+  const handleTaleClick = (id: string) => {
+    const selectedTale = tales.find((tale) => tale.id === id);
+    if (!selectedTale) {
+      alert("Tale not found!");
+      return;
+    }
 
-      // blob temp data
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    try {
+      const blob = new Blob([selectedTale.text], {
+        type: "text/plain;charset=utf-8",
+      });
       const url = URL.createObjectURL(blob);
 
-      // blob in the same tab, making it compatible on phones
       window.location.href = url;
     } catch (error) {
       console.error("Failed to load tale content", error);
-      alert(
-        "An error occurred while loading the tale content. Please try again."
-      );
+      alert("An error occurred while loading the tale content. Please try again.");
     }
   };
 
+  // Přidání nové pohádky
+  const handleAddTale = () => {
+    if (!newTale.name || !newTale.title || !newTale.text) {
+      alert("Vyplňte všechna pole!");
+      return;
+    }
+
+    const newId = Date.now().toString(); // Unikátní ID
+    const updatedTales = [
+      ...tales,
+      { id: newId, name: newTale.name, title: newTale.title, text: newTale.text, edit: true },
+    ];
+    setTales(updatedTales);
+    localStorage.setItem("moduleData-4", JSON.stringify(updatedTales));
+
+    // Zavřít modal a vyčistit vstupy
+    setNewTale({ name: "", title: "", text: "" });
+    setModalVisible(false);
+  };
+
   return (
-    <div className="tales-container d-flex flex-wrap gap-3 p-3">
-      {tales.map((tale, index) => (
-        <div
-          key={index}
-          className="card shadow-sm border-0 rounded-3"
-          style={{
-            width: "18rem",
-            cursor: "pointer",
-            transition: "transform 0.2s",
-          }}
-          onClick={() => handleTaleClick(tale.name)}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.transform = "scale(1.05)")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          <div className="overflow-hidden" style={{ height: "150px" }}>
-            <img
-              src={`/tales/${tale.name}.webp`}
-              alt={tale.name}
-              className="card-img-top h-100 w-100"
-              style={{ objectFit: "cover" }}
-            />
+    <div className="container">
+      <h2 className="mb-4">Pohádky</h2>
+      {/* Seznam pohádek */}
+      <div className="tales-container d-flex flex-wrap gap-3 p-3">
+        {tales.map((tale) => (
+          <div
+            key={tale.id}
+            className="card shadow-sm border-0 rounded-3"
+            style={{
+              width: "18rem",
+              cursor: "pointer",
+              transition: "transform 0.2s",
+            }}
+            onClick={() => handleTaleClick(tale.id)}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.transform = "scale(1.05)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            <div className="overflow-hidden" style={{ height: "100%" }}>
+              <img
+                src={`/tales/${tale.name}.png`}
+                alt={tale.name}
+                className="card-img-top h-100 w-100"
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+            <div className="card-body text-center bg-primary">
+              <p className="card-title text-white fw-bold">{tale.title}</p>
+            </div>
           </div>
-          <div className="card-body text-center bg-light">
-            <p className="card-text mb-0">{tale.preview}</p>
+        ))}
+      </div>
+      <button
+        onClick={() => setModalVisible(true)}
+        className="btn btn-primary mb-3"
+      >
+        Přidat pohádku
+      </button>
+
+      {/* Modal */}
+      {modalVisible && (
+        <div
+          className="modal"
+          style={{
+            display: "block",
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 1050,
+            backgroundColor: "white",
+            borderRadius: "8px",
+            maxWidth: "500px",
+            width: "100%",
+            boxShadow: "0 5px 15px rgba(0,0,0,.5)",
+          }}
+        >
+          <div className="modal-header bg-primary text-white">
+            <h5 className="modal-title">Přidat novou pohádku</h5>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setModalVisible(false)}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <div className="mb-3">
+              <label htmlFor="taleName" className="form-label">
+                Název souboru
+              </label>
+              <input
+                type="text"
+                id="taleName"
+                className="form-control"
+                value={newTale.name}
+                onChange={(e) => setNewTale({ ...newTale, name: e.target.value })}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="taleTitle" className="form-label">
+                Název pohádky
+              </label>
+              <input
+                type="text"
+                id="taleTitle"
+                className="form-control"
+                value={newTale.title}
+                onChange={(e) => setNewTale({ ...newTale, title: e.target.value })}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="taleText" className="form-label">
+                Text pohádky
+              </label>
+              <textarea
+                id="taleText"
+                className="form-control"
+                rows={5}
+                value={newTale.text}
+                onChange={(e) => setNewTale({ ...newTale, text: e.target.value })}
+              ></textarea>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setModalVisible(false)}
+            >
+              Zavřít
+            </button>
+            <button className="btn btn-primary" onClick={handleAddTale}>
+              Uložit pohádku
+            </button>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
-}
+};
 
 function Settings() {
   // dark mode
@@ -1038,6 +1151,7 @@ function Settings() {
               type="checkbox"
               id="darkModeSwitch"
               onChange={handleDarkModeToggle}
+              checked={darkMode === "dark"}
             />
             <label className="form-check-label" htmlFor="darkModeSwitch">
               {darkMode === "dark" ? "Zapnuto ": "Vypnuto"}
@@ -1193,7 +1307,7 @@ function Dashboard() {
   if (isAuthenticated === null) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
-        <img src="home_cropped.gif" />
+        <img src="home.gif" />
       </div>
     );
   }

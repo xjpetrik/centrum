@@ -45,7 +45,7 @@ const Login: React.FC = () => {
             <div className="w-100 text-center" style={{ maxWidth: "400px" }}>
                 <div className="mb-4 d-flex justify-content-center">
                     <img
-                        src="home_cropped.gif"
+                        src="home.gif"
                         alt="Animated Logo"
                         style={{
                             width: "100%",
