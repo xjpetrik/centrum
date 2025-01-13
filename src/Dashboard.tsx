@@ -205,8 +205,9 @@ function Sidebar({
       } bg-light position-relative`}
     >
       <button
-        className="toggle-button btn btn-primary fw-bold py-2 px-3"
+        className="toggle-button btn btn-primary fw-bold "
         onClick={() => setSidebarVisible(!isSidebarVisible)}
+        style={{width: "100%", minWidth: "50px"}}
       >
         {isSidebarVisible ? "⬅" : "➡"}
       </button>
@@ -859,11 +860,11 @@ function Points({ name }: PointsProps) {
           className="table table-bordered table-hover mx-auto"
           style={{ maxWidth: "100%" }}
         >
-          <thead className="table-light">
+          <thead >
             <tr>
-              <th style={{ width: "20%" }}>Rozdíl</th>
-              <th style={{ width: "60%" }}>Důvod</th>
-              <th style={{ width: "20%" }}>Akce</th>
+              <th className="randomthcico" style={{ width: "20%" }}>Rozdíl</th>
+              <th className="randomthcico" style={{ width: "60%" }}>Důvod</th>
+              <th className="randomthcico" style={{ width: "20%" }}>Akce</th>
             </tr>
           </thead>
           <tbody>
@@ -959,7 +960,6 @@ const Tales = () => {
 
   return (
     <div className="container">
-      <h2 className="mb-4">Pohádky</h2>
       {/* Seznam pohádek */}
       <div className="tales-container d-flex flex-wrap gap-3 p-3">
         {tales.map((tale) => (
@@ -979,21 +979,21 @@ const Tales = () => {
           >
             <div className="overflow-hidden" style={{ height: "100%" }}>
               <img
-                src={`/tales/${tale.name}.png`}
+                src={`/centrum/tales/${tale.name}.webp`}
                 alt={tale.name}
                 className="card-img-top h-100 w-100"
                 style={{ objectFit: "cover" }}
               />
             </div>
             <div className="card-body text-center bg-primary">
-              <p className="card-title text-white fw-bold">{tale.title}</p>
+              <p className="card-title text-white fs-5 fw-bold">{tale.title}</p>
             </div>
           </div>
         ))}
       </div>
       <button
         onClick={() => setModalVisible(true)}
-        className="btn btn-primary mb-3"
+        className="btn btn-primary mt-5 fs-5"
       >
         Přidat pohádku
       </button>
