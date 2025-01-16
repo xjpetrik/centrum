@@ -260,10 +260,10 @@ function ToDo({ name }: ToDoProps) {
     }[]
   >([]);
   const [newTask, setNewTask] = useState("");
-
+  let module = (name === "Domácnost") ? `moduleData-6` : `moduleData-1`;
   // Načtení úkolů z Local Storage při prvním renderu
   useEffect(() => {
-    const storedData = localStorage.getItem(`moduleData-1`);
+    const storedData = localStorage.getItem(module);
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       const filteredTasks = parsedData.filter(
@@ -275,13 +275,13 @@ function ToDo({ name }: ToDoProps) {
 
   // Uložení úkolů do Local Storage při každé změně úkolů
   useEffect(() => {
-    const storedData = localStorage.getItem(`moduleData-1`);
+    const storedData = localStorage.getItem(module);
     const existingData = storedData ? JSON.parse(storedData) : [];
     const updatedData = [
       ...existingData.filter((task: any) => task.name !== name),
       ...tasks,
     ];
-    localStorage.setItem(`moduleData-1`, JSON.stringify(updatedData));
+    localStorage.setItem(module, JSON.stringify(updatedData));
   }, [tasks, name]);
 
   const addTask = () => {
@@ -1398,7 +1398,7 @@ function Dashboard() {
             </div>
           </div>
         ) : null}
-        {activeModule === 6 ? "TBD" : null}
+        {activeModule === 6 ? <ToDo name="Domácnost"/> : null}
         {activeModule === 7 ? <Settings /> : null}
       </div>
     </div>
