@@ -9,7 +9,7 @@ const modules = [
   { id: 3, name: "Kalendář", logo: "🐕" },
   { id: 4, name: "Velká kniha pohádek", logo: "🧚" },
   { id: 5, name: "Bodová ohodnocení", logo: "🎁" },
-  { id: 6, name: "Remainder", logo: "🔔" },
+  { id: 6, name: "Domácnost", logo: "🔔" },
   { id: 7, name: "Nastavení", logo: "⚙️" },
 ];
 
@@ -501,7 +501,7 @@ function Calendar() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
 
-  const symbols = ["👀", "😈", "💣", "🩸", "🧴", "🤧", "🍊"];
+  const symbols = ["👀", "😈", "💣", "🩸", "🧴", "🤧", "🍊", "🚰"];
   const symbolColors: { [key: string]: string } = {
     "👀": "black",
     "😈": "purple",
@@ -511,6 +511,7 @@ function Calendar() {
     "🤧": "blue",
     "🍊": "orange",
     "♥": "red",
+    "🚰": "blue",
   };
 
   useEffect(() => {
