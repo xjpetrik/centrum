@@ -33,12 +33,10 @@ const hexToRgb = (hex: string) => {
 };
 
 const setNewColor = (colorType: string, hexColor: string) => {
-  document.documentElement.style.setProperty(colorType, hexColor); // btns
-  document.documentElement.style.setProperty(
+  document.documentElement.style.setProperty(colorType, hexColor); document.documentElement.style.setProperty(
     `${colorType}-rgb`,
     hexToRgb(hexColor)
-  ); // txt
-  colorsList[colorType] = { hexColor };
+  ); colorsList[colorType] = { hexColor };
 };
 
 async function fetchModuleData(moduleId: number) {
@@ -79,7 +77,6 @@ async function fetchModuleData(moduleId: number) {
   const sortedNewData = sortById([...newData]);
 
   if (JSON.stringify(sortedStoredData) !== JSON.stringify(sortedNewData)) {
-    // update
     localStorage.setItem(`moduleData-${moduleId}`, JSON.stringify(newData));
     console.log(`moduleData-${moduleId}`, JSON.stringify(newData));
     const normalizedStoredData = sortedStoredData.map((item: any) => ({
@@ -101,7 +98,6 @@ async function syncModuleData(moduleId: number) {
     return 0;
   }
 
-  // Retrieve local storage data and filter for edited items
   const localData = JSON.parse(
     localStorage.getItem(`moduleData-${moduleId}`) || "[]"
   );
@@ -110,7 +106,6 @@ async function syncModuleData(moduleId: number) {
   );
 
   if (editedData.length === 0) {
-    // No data to sync
     return 0;
   }
 
@@ -132,7 +127,6 @@ async function syncModuleData(moduleId: number) {
     return 0;
   }
 
-  // Optionally handle response from server
   const serverResponse = await response.json();
   console.log("Sync response:", serverResponse);
   return 1;
@@ -154,8 +148,7 @@ function Sidebar({
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isSynchronized, setSynchronize] = useState(true);
 
-  const [isSyncInProgress, setSyncInProgress] = useState(false); // mutex
-
+  const [isSyncInProgress, setSyncInProgress] = useState(false);
   useEffect(() => {
     if (activeModule !== null) {
       const fetchDataAndSync = async () => {
@@ -168,8 +161,7 @@ function Sidebar({
         setSynchronize(true);
 
         const syncLoop = async () => {
-          if (isSyncInProgress) return; // race condition opatření
-          setSyncInProgress(true);
+          if (isSyncInProgress) return; setSyncInProgress(true);
 
           try {
             if (isSynchronized) {
@@ -200,14 +192,13 @@ function Sidebar({
 
   return (
     <div
-      className={`sidebar-container shadow ${
-        isSidebarVisible ? "" : "collapsed"
-      } bg-light position-relative`}
+      className={`sidebar-container shadow ${isSidebarVisible ? "" : "collapsed"
+        } bg-light position-relative`}
     >
       <button
         className="toggle-button btn btn-primary fw-bold "
         onClick={() => setSidebarVisible(!isSidebarVisible)}
-        style={{width: "100%", minWidth: "50px"}}
+        style={{ width: "100%", minWidth: "50px" }}
       >
         {isSidebarVisible ? "⬅" : "➡"}
       </button>
@@ -217,9 +208,8 @@ function Sidebar({
             {modules.map((module) => (
               <button
                 key={module.id}
-                className={`list-group-item list-group-item-action d-flex align-items-center ${
-                  activeModule === module.id ? "active" : ""
-                }`}
+                className={`list-group-item list-group-item-action d-flex align-items-center ${activeModule === module.id ? "active" : ""
+                  }`}
                 onClick={() => setActiveModule(module.id)}
               >
                 <span className="me-2 fs-5">{module.logo}</span>
@@ -261,7 +251,6 @@ function ToDo({ name }: ToDoProps) {
   >([]);
   const [newTask, setNewTask] = useState("");
   let module = (name === "Domácnost") ? `moduleData-6` : `moduleData-1`;
-  // Načtení úkolů z Local Storage při prvním renderu
   useEffect(() => {
     const storedData = localStorage.getItem(module);
     if (storedData) {
@@ -273,7 +262,6 @@ function ToDo({ name }: ToDoProps) {
     }
   }, [name]);
 
-  // Uložení úkolů do Local Storage při každé změně úkolů
   useEffect(() => {
     const storedData = localStorage.getItem(module);
     const existingData = storedData ? JSON.parse(storedData) : [];
@@ -345,16 +333,14 @@ function ToDo({ name }: ToDoProps) {
       </div>
       <ul className="list-group my-1">
         {[...tasks]
-          .filter((task) => task.text.trim() !== "") // Filtruje úkoly s neprázdným textem
-          .sort((a, b) => Number(a.completed) - Number(b.completed))
+          .filter((task) => task.text.trim() !== "").sort((a, b) => Number(a.completed) - Number(b.completed))
           .map((task) => (
             <li
               key={task.id}
-              className={`list-group-item d-flex align-items-center justify-content-start hover-none ${
-                task.completed
-                  ? "text-muted text-decoration-line-through hover-none"
-                  : ""
-              }`}
+              className={`list-group-item d-flex align-items-center justify-content-start hover-none ${task.completed
+                ? "text-muted text-decoration-line-through hover-none"
+                : ""
+                }`}
             >
               <div className="d-flex align-items-center gap-3">
                 <input
@@ -388,22 +374,15 @@ function Notes() {
     }
   });
 
-  const [draftNotes, setDraftNotes] = useState<any[]>(notes); // Lokální stav pro okamžité zobrazení textu během psaní
-  const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]); // Uloží refy pro všechny textarey
-  const timeoutRefs = useRef<{ [key: number]: number | null }>({}); // Uloží timeouty pro debouncing
-
-  // Automatické přizpůsobení výšky textarey při každém vykreslení
+  const [draftNotes, setDraftNotes] = useState<any[]>(notes); const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]); const timeoutRefs = useRef<{ [key: number]: number | null }>({});
   useEffect(() => {
     textAreaRefs.current.forEach((textarea) => {
       if (textarea) {
-        textarea.style.height = "auto"; // Reset výšky
-        textarea.style.height = `${textarea.scrollHeight}px`; // Nastavení výšky podle obsahu
+        textarea.style.height = "auto"; textarea.style.height = `${textarea.scrollHeight}px`;
       }
     });
-  }, [draftNotes]); // Spouští se při každé změně poznámky
-
+  }, [draftNotes]);
   useEffect(() => {
-    // Uloží poznámky do localStorage při aktualizaci
     localStorage.setItem("moduleData-2", JSON.stringify(notes));
   }, [notes]);
 
@@ -414,24 +393,21 @@ function Notes() {
       text: value,
     };
 
-    setDraftNotes(updatedDraftNotes); // Okamžitě zobrazí změny během psaní
-
+    setDraftNotes(updatedDraftNotes);
     if (timeoutRefs.current[index]) {
-      clearTimeout(timeoutRefs.current[index]!); // Zruší předchozí timeout, pokud existuje
+      clearTimeout(timeoutRefs.current[index]!);
     }
 
-    // Nastaví timeout na 1 sekundu pro uložení změn
     timeoutRefs.current[index] = window.setTimeout(() => {
       const updatedNotes = [...notes];
       updatedNotes[index] = {
         ...updatedNotes[index],
         text: value,
-        edit: true, // Označí poznámku jako upravenou po 1 sekundě nečinnosti
+        edit: true,
       };
 
-      setNotes(updatedNotes); // Aktualizuje hlavní poznámky
-      timeoutRefs.current[index] = null; // Reset timeoutu
-    }, 1000); // 1 sekunda
+      setNotes(updatedNotes); timeoutRefs.current[index] = null;
+    }, 1000);
   };
 
   const addNote = () => {
@@ -516,23 +492,18 @@ function Calendar() {
 
   useEffect(() => {
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 1. den měsíce
-    const lastDayOfMonth = new Date(
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); const lastDayOfMonth = new Date(
       today.getFullYear(),
       today.getMonth() + 1,
       0
-    ); // Poslední den měsíce
-
-    const startPaddingDays = (firstDayOfMonth.getDay() + 6) % 7; // Zarovnání na pondělí (0 = pondělí)
-
+    );
+    const startPaddingDays = (firstDayOfMonth.getDay() + 6) % 7;
     const generatedDays: Date[] = [];
 
-    // Přidání prázdných buněk na začátku
     for (let i = 0; i < startPaddingDays; i++) {
-      generatedDays.push(new Date(0)); // Falešné datum jako placeholder
+      generatedDays.push(new Date(0));
     }
 
-    // Přidání skutečných dnů měsíce
     for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
       generatedDays.push(new Date(today.getFullYear(), today.getMonth(), day));
     }
@@ -541,8 +512,7 @@ function Calendar() {
   }, []);
 
   const isToday = (date: Date) => {
-    if (date.getTime() === 0) return false; // Ignorujeme placeholder dny
-    const today = new Date();
+    if (date.getTime() === 0) return false; const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
@@ -551,8 +521,7 @@ function Calendar() {
   };
 
   const handleDayClick = (day: Date) => {
-    if (day.getTime() === 0) return; // Kliknutí na placeholder dny se ignoruje
-    const dayKey = day.toISOString().split("T")[0];
+    if (day.getTime() === 0) return; const dayKey = day.toISOString().split("T")[0];
     setSelectedDay(dayKey);
     const existingEntry = calendarData.find((entry) => entry.id === dayKey);
     setSelectedSymbols(existingEntry?.text || []);
@@ -609,13 +578,12 @@ function Calendar() {
         {days.map((day, index) => (
           <button
             key={index}
-            className={`btn text-center shadow-sm ${
-              isToday(day)
-                ? "btn-primary text-white"
-                : day.getTime() === 0
+            className={`btn text-center shadow-sm ${isToday(day)
+              ? "btn-primary text-white"
+              : day.getTime() === 0
                 ? "btn-secondary border-0"
                 : "btn-outline-secondary text-dark"
-            }`}
+              }`}
             style={{
               padding: "10%",
               minHeight: "120px",
@@ -654,10 +622,10 @@ function Calendar() {
                         style={{
                           color:
                             symbolColors[
-                              calendarData.find(
-                                (entry) =>
-                                  entry.id === day.toISOString().split("T")[0]
-                              )?.text[idx] || ""
+                            calendarData.find(
+                              (entry) =>
+                                entry.id === day.toISOString().split("T")[0]
+                            )?.text[idx] || ""
                             ] || "inherit",
                           fontWeight: "bold",
                         }}
@@ -691,8 +659,8 @@ function Calendar() {
                 type="button"
                 className="btn-close"
                 onClick={() =>
-                  (document.getElementById("symbolModal")!.style.display =
-                    "none")
+                (document.getElementById("symbolModal")!.style.display =
+                  "none")
                 }
               ></button>
             </div>
@@ -701,11 +669,10 @@ function Calendar() {
                 {symbols.map((symbol) => (
                   <button
                     key={symbol}
-                    className={`btn fs-5 ${
-                      selectedSymbols.includes(symbol)
-                        ? "btn-primary shadow"
-                        : "btn-outline-secondary"
-                    }`}
+                    className={`btn fs-5 ${selectedSymbols.includes(symbol)
+                      ? "btn-primary shadow"
+                      : "btn-outline-secondary"
+                      }`}
                     style={{ color: symbolColors[symbol] }}
                     onClick={() => toggleSymbol(symbol)}
                   >
@@ -719,8 +686,8 @@ function Calendar() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() =>
-                  (document.getElementById("symbolModal")!.style.display =
-                    "none")
+                (document.getElementById("symbolModal")!.style.display =
+                  "none")
                 }
               >
                 Zavřít
@@ -785,9 +752,9 @@ function Points({ name }: PointsProps) {
     const existingData = storedData ? JSON.parse(storedData) : [];
     const updatedData = Array.isArray(existingData)
       ? [
-          ...existingData.filter((entry: LogEntry) => entry.name !== name),
-          ...log,
-        ]
+        ...existingData.filter((entry: LogEntry) => entry.name !== name),
+        ...log,
+      ]
       : log;
     localStorage.setItem("moduleData-5", JSON.stringify(updatedData));
   }, [log]);
@@ -905,7 +872,6 @@ const Tales = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newTale, setNewTale] = useState({ name: "", title: "", text: "" });
 
-  // Načtení dat z localStorage při spuštění
   useEffect(() => {
     const storedData = localStorage.getItem("moduleData-4");
     if (storedData) {
@@ -918,7 +884,6 @@ const Tales = () => {
     }
   }, []);
 
-  // Funkce pro zobrazení obsahu pohádky
   const handleTaleClick = (id: string) => {
     const selectedTale = tales.find((tale) => tale.id === id);
     if (!selectedTale) {
@@ -939,22 +904,19 @@ const Tales = () => {
     }
   };
 
-  // Přidání nové pohádky
   const handleAddTale = () => {
     if (!newTale.name || !newTale.title || !newTale.text) {
       alert("Vyplňte všechna pole!");
       return;
     }
 
-    const newId = Date.now().toString(); // Unikátní ID
-    const updatedTales = [
+    const newId = Date.now().toString(); const updatedTales = [
       ...tales,
       { id: newId, name: newTale.name, title: newTale.title, text: newTale.text, edit: true },
     ];
     setTales(updatedTales);
     localStorage.setItem("moduleData-4", JSON.stringify(updatedTales));
 
-    // Zavřít modal a vyčistit vstupy
     setNewTale({ name: "", title: "", text: "" });
     setModalVisible(false);
   };
@@ -1101,19 +1063,17 @@ function Settings() {
   );
   const [darkMode, setDarkMode] = useState(localStorage.getItem("darkMode"));
 
-  // Toggle dark mode and store preference
   const handleDarkModeToggle = () => {
     let currentTheme = document.body.getAttribute("data-bs-theme");
     currentTheme = (currentTheme === "nodark") ? "dark" : "nodark"
     document.body.setAttribute(
       "data-bs-theme",
-    currentTheme
-  );
-  setDarkMode(currentTheme);
-  localStorage.setItem("darkMode", currentTheme);
+      currentTheme
+    );
+    setDarkMode(currentTheme);
+    localStorage.setItem("darkMode", currentTheme);
   };
 
-  // Change password function
   const handleChangePassword = () => {
     if (!newPassword || !confirmPassword) {
       setPasswordChangeMessage("Vyplňte obě pole.");
@@ -1155,7 +1115,7 @@ function Settings() {
               checked={darkMode === "dark"}
             />
             <label className="form-check-label" htmlFor="darkModeSwitch">
-              {darkMode === "dark" ? "Zapnuto ": "Vypnuto"}
+              {darkMode === "dark" ? "Zapnuto " : "Vypnuto"}
             </label>
           </div>
         </div>
@@ -1165,42 +1125,37 @@ function Settings() {
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-primary", e.target.value)}
-            value={colorsList["--bs-primary"]?.hexColor || "#007bff"} // Výchozí modrá barva
-            className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-primary"]?.hexColor || "#007bff"} className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-secondary rounded px-2 py-1">Sekundární</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-secondary", e.target.value)}
-            value={colorsList["--bs-secondary"]?.hexColor || "#6c757d"} // Výchozí šedá barva
-            className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-secondary"]?.hexColor || "#6c757d"} className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-success rounded px-2 py-1">Úspěšně</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-success", e.target.value)}
-            value={colorsList["--bs-success"]?.hexColor || "#28a745"} // Výchozí zelená barva
-            className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-success"]?.hexColor || "#28a745"} className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-danger rounded px-2 py-1">Chyba</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-danger", e.target.value)}
-            value={colorsList["--bs-danger"]?.hexColor || "#dc3545"} // Výchozí červená barva
-            className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-danger"]?.hexColor || "#dc3545"} className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-warning rounded px-2 py-1">Varování</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-warning", e.target.value)}
-            value={colorsList["--bs-warning"]?.hexColor || "#ffc107"} // Výchozí žlutá barva
-            className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-warning"]?.hexColor || "#ffc107"} className="input-group input-group-sm mb-3"
           />
           <button onClick={handleSaveColors} className="btn btn-primary">
             Uložit barvy
           </button>
           {colorChangeMessage && (<div className="mt-3 alert alert-info">{colorChangeMessage}</div>
-        )}
+          )}
         </div>
       </div>
       <h1 className="text-primary font-weight-bold mb-0 mt-4">Bezpečnost</h1>
@@ -1280,7 +1235,6 @@ function Dashboard() {
       return;
     }
 
-    // Verify token
     fetch(
       "https://data-server-892925846021.europe-central2.run.app/dashboard",
       {
@@ -1399,7 +1353,7 @@ function Dashboard() {
             </div>
           </div>
         ) : null}
-        {activeModule === 6 ? <ToDo name="Domácnost"/> : null}
+        {activeModule === 6 ? <ToDo name="Domácnost" /> : null}
         {activeModule === 7 ? <Settings /> : null}
       </div>
     </div>
