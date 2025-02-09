@@ -632,7 +632,7 @@ function Calendar({ activeModule, name }: ModuleProps) {
                           calendarData.find(
                             (entry) =>
                               entry.id === day.toISOString().split("T")[0]
-                          )?.text[idx] /* Mezera */
+                          )?.text[idx]
                         }
                       </span>
                     ))}
@@ -976,8 +976,7 @@ function Tales({ activeModule, name }: ModuleProps) {
       >
         Přidat pohádku
       </button>
-
-      {/* Modal */}
+      
       {modalVisible && (
         <div
           className="modal"
@@ -1075,11 +1074,6 @@ function Settings() {
   // counter udělaných pejskovo prodecur na tomto zařízení
   // counter přečtených pohádek
   // counter přidaných/odebraných bodů na tomto zařízení
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [passwordChangeMessage, setPasswordChangeMessage] = useState<
-    string | null
-  >(null);
   const [colorChangeMessage, setColorChangeMessage] = useState<string | null>(
     null
   );
@@ -1091,25 +1085,6 @@ function Settings() {
     document.body.setAttribute("data-bs-theme", currentTheme);
     setDarkMode(currentTheme);
     localStorage.setItem("darkMode", currentTheme);
-  };
-
-  const handleChangePassword = () => {
-    if (!newPassword || !confirmPassword) {
-      setPasswordChangeMessage("Vyplňte obě pole.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordChangeMessage("Hesla se neshodují.");
-      return;
-    }
-
-    setPasswordChangeMessage("Probíhá změna hesla...");
-    setTimeout(() => {
-      setPasswordChangeMessage("Heslo bylo úspěšně změněno.");
-      setNewPassword("");
-      setConfirmPassword("");
-    }, 1000);
   };
 
   const handleSaveColors = () => {
@@ -1185,40 +1160,10 @@ function Settings() {
       <h1 className="text-primary font-weight-bold mb-0 mt-4">Bezpečnost</h1>
       <hr className="mb-4" />
       <div className="border border-primary rounded px-3 py-3 mb-3">
-        <h2>Změna hesla</h2>
-        <div className="mb-2">
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Nové heslo"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-        </div>
-        <div className="mb-3">
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Potvrzení hesla"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </div>
-        <button
-          className="btn btn-primary w-100 mb-2"
-          onClick={handleChangePassword}
-        >
-          Změnit heslo
-        </button>
-        {passwordChangeMessage && (
-          <div className="mt-3 alert alert-info">{passwordChangeMessage}</div>
-        )}
-      </div>
-      <div className="border border-primary rounded px-3 py-3 mb-3">
         <h2>Odhlásit ze všech relací</h2>
         <button
           className="btn btn-primary w-100 mb-2"
-          onClick={handleChangePassword}
+          onClick={handleSaveColors}
         >
           Smazat všechny sessions ze všech zařízení včetně tohoto
         </button>
