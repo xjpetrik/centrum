@@ -9,7 +9,7 @@ const modules = [
   { id: 3, name: "Kalendář", logo: "🐕" },
   { id: 4, name: "Velká kniha pohádek", logo: "🧚" },
   { id: 5, name: "Bodová ohodnocení", logo: "🎁" },
-  { id: 6, name: "Domácnost", logo: "🔔" },
+  { id: 6, name: "Domácnost", logo: "🏠" },
   { id: 7, name: "Nastavení", logo: "⚙️" },
 ];
 
@@ -19,9 +19,8 @@ const loadColors = () => {
   const savedColors = localStorage.getItem("prefColors");
   if (!savedColors) return;
   colorsList = JSON.parse(savedColors);
-  for (const [colorType, { hexColor }] of Object.entries(colorsList)) {
+  for (const [colorType, { hexColor }] of Object.entries(colorsList))
     setNewColor(colorType, hexColor);
-  }
 };
 
 const hexToRgb = (hex: string) => {
@@ -33,15 +32,16 @@ const hexToRgb = (hex: string) => {
 };
 
 const setNewColor = (colorType: string, hexColor: string) => {
-  document.documentElement.style.setProperty(colorType, hexColor); document.documentElement.style.setProperty(
+  document.documentElement.style.setProperty(colorType, hexColor);
+  document.documentElement.style.setProperty(
     `${colorType}-rgb`,
     hexToRgb(hexColor)
-  ); colorsList[colorType] = { hexColor };
+  );
+  colorsList[colorType] = { hexColor };
 };
 
 async function fetchModuleData(moduleId: number) {
   const token = localStorage.getItem("sessionToken");
-
   if (!token) {
     window.location.href = "/centrum/";
     return 0;
@@ -71,6 +71,7 @@ async function fetchModuleData(moduleId: number) {
   const serverResponse = await response.json();
   const newData = serverResponse.data || [];
 
+  // needs sort => server side and local side are working with json different way
   const sortById = (array: any) => array.sort((a: any, b: any) => a.id - b.id);
 
   const sortedStoredData = sortById([...storedData]);
@@ -153,47 +154,38 @@ function Sidebar({
     if (activeModule !== null) {
       const fetchDataAndSync = async () => {
         const result = await fetchModuleData(activeModule);
-        if (result === 1) {
-          setNewDataAlert(true);
-        } else {
-          setNewDataAlert(false);
-        }
+        if (result === 1) setNewDataAlert(true);
+        else setNewDataAlert(false);
         setSynchronize(true);
-
         const syncLoop = async () => {
-          if (isSyncInProgress) return; setSyncInProgress(true);
-
+          if (isSyncInProgress) return;
+          setSyncInProgress(true);
           try {
             if (isSynchronized) {
               let result = await syncModuleData(activeModule);
               if (result === 1) {
                 setSynchronize(false);
                 result = await fetchModuleData(activeModule);
-                if (result !== 0) {
-                  setNewDataAlert(true);
-                } else {
-                  setSynchronize(true);
-                }
+                if (result !== 0) setNewDataAlert(true);
+                else setSynchronize(true);
               }
             }
           } finally {
             setSyncInProgress(false);
           }
-
           setTimeout(syncLoop, 2000);
         };
-
         syncLoop();
       };
-
       fetchDataAndSync();
     }
   }, [activeModule]);
 
   return (
     <div
-      className={`sidebar-container shadow ${isSidebarVisible ? "" : "collapsed"
-        } bg-light position-relative`}
+      className={`sidebar-container shadow ${
+        isSidebarVisible ? "" : "collapsed"
+      } bg-light position-relative`}
     >
       <button
         className="toggle-button btn btn-primary fw-bold "
@@ -208,8 +200,9 @@ function Sidebar({
             {modules.map((module) => (
               <button
                 key={module.id}
-                className={`list-group-item list-group-item-action d-flex align-items-center ${activeModule === module.id ? "active" : ""
-                  }`}
+                className={`list-group-item list-group-item-action d-flex align-items-center ${
+                  activeModule === module.id ? "active" : ""
+                }`}
                 onClick={() => setActiveModule(module.id)}
               >
                 <span className="me-2 fs-5">{module.logo}</span>
@@ -235,11 +228,15 @@ function Sidebar({
   );
 }
 
-interface ToDoProps {
+interface ModuleProps {
+  activeModule: number | null;
   name: string;
 }
 
-function ToDo({ name }: ToDoProps) {
+
+function ToDo({ activeModule, name }: ModuleProps) {
+  if (!name)
+      return <p>err</p>;
   const [tasks, setTasks] = useState<
     {
       id: number;
@@ -250,7 +247,7 @@ function ToDo({ name }: ToDoProps) {
     }[]
   >([]);
   const [newTask, setNewTask] = useState("");
-  let module = (name === "Domácnost") ? `moduleData-6` : `moduleData-1`;
+  let module = `moduleData-${activeModule}`
   useEffect(() => {
     const storedData = localStorage.getItem(module);
     if (storedData) {
@@ -333,14 +330,16 @@ function ToDo({ name }: ToDoProps) {
       </div>
       <ul className="list-group my-1">
         {[...tasks]
-          .filter((task) => task.text.trim() !== "").sort((a, b) => Number(a.completed) - Number(b.completed))
+          .filter((task) => task.text.trim() !== "")
+          .sort((a, b) => Number(a.completed) - Number(b.completed))
           .map((task) => (
             <li
               key={task.id}
-              className={`list-group-item d-flex align-items-center justify-content-start hover-none ${task.completed
-                ? "text-muted text-decoration-line-through hover-none"
-                : ""
-                }`}
+              className={`list-group-item d-flex align-items-center justify-content-start hover-none ${
+                task.completed
+                  ? "text-muted text-decoration-line-through hover-none"
+                  : ""
+              }`}
             >
               <div className="d-flex align-items-center gap-3">
                 <input
@@ -363,27 +362,25 @@ function ToDo({ name }: ToDoProps) {
   );
 }
 
-function Notes() {
+function Notes({ activeModule, name }: ModuleProps) {
   const [notes, setNotes] = useState<any[]>(() => {
-    const savedNotes = localStorage.getItem("moduleData-2");
-    try {
-      return savedNotes ? JSON.parse(savedNotes) : [];
-    } catch (error) {
-      console.error("Failed to parse saved notes:", error);
-      return [];
-    }
+    const savedNotes = localStorage.getItem(`moduleData-${activeModule}`);
+    return savedNotes ? JSON.parse(savedNotes) : [];
   });
 
-  const [draftNotes, setDraftNotes] = useState<any[]>(notes); const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]); const timeoutRefs = useRef<{ [key: number]: number | null }>({});
+  const [draftNotes, setDraftNotes] = useState<any[]>(notes);
+  const textAreaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const timeoutRefs = useRef<{ [key: number]: number | null }>({});
   useEffect(() => {
     textAreaRefs.current.forEach((textarea) => {
       if (textarea) {
-        textarea.style.height = "auto"; textarea.style.height = `${textarea.scrollHeight}px`;
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
       }
     });
   }, [draftNotes]);
   useEffect(() => {
-    localStorage.setItem("moduleData-2", JSON.stringify(notes));
+    localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(notes));
   }, [notes]);
 
   const handleTextChange = (index: number, value: string) => {
@@ -406,7 +403,8 @@ function Notes() {
         edit: true,
       };
 
-      setNotes(updatedNotes); timeoutRefs.current[index] = null;
+      setNotes(updatedNotes);
+      timeoutRefs.current[index] = null;
     }, 1000);
   };
 
@@ -429,7 +427,7 @@ function Notes() {
         margin: "0 auto",
       }}
     >
-      <h2>Poznámky</h2>
+      <h2>{name}</h2>
       {draftNotes.map((note: any, index: number) => (
         <textarea
           key={note.id}
@@ -463,16 +461,11 @@ function Notes() {
   );
 }
 
-function Calendar() {
+function Calendar({ activeModule, name }: ModuleProps) {
   const [days, setDays] = useState<Date[]>([]);
   const [calendarData, setCalendarData] = useState<any[]>(() => {
-    const savedData = localStorage.getItem("moduleData-3");
-    try {
-      return savedData ? JSON.parse(savedData) : [];
-    } catch (error) {
-      console.error("Failed to parse saved calendar data:", error);
-      return [];
-    }
+    const savedData = localStorage.getItem(`moduleData-${activeModule}`);
+    return savedData ? JSON.parse(savedData) : [];
   });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
@@ -492,7 +485,8 @@ function Calendar() {
 
   useEffect(() => {
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); const lastDayOfMonth = new Date(
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(
       today.getFullYear(),
       today.getMonth() + 1,
       0
@@ -512,7 +506,8 @@ function Calendar() {
   }, []);
 
   const isToday = (date: Date) => {
-    if (date.getTime() === 0) return false; const today = new Date();
+    if (date.getTime() === 0) return false;
+    const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
@@ -521,7 +516,8 @@ function Calendar() {
   };
 
   const handleDayClick = (day: Date) => {
-    if (day.getTime() === 0) return; const dayKey = day.toISOString().split("T")[0];
+    if (day.getTime() === 0) return;
+    const dayKey = day.toISOString().split("T")[0];
     setSelectedDay(dayKey);
     const existingEntry = calendarData.find((entry) => entry.id === dayKey);
     setSelectedSymbols(existingEntry?.text || []);
@@ -545,7 +541,7 @@ function Calendar() {
       updatedData.push({ id: selectedDay, text: selectedSymbols, edit: true });
       setCalendarData(updatedData);
 
-      localStorage.setItem("moduleData-3", JSON.stringify(updatedData));
+      localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(updatedData));
     }
 
     const modal = document.getElementById("symbolModal");
@@ -555,7 +551,7 @@ function Calendar() {
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">
-        Kalendář{" "}
+        {name}{" "}
         <img
           src="pejsek.png"
           className="img-fluid"
@@ -578,12 +574,13 @@ function Calendar() {
         {days.map((day, index) => (
           <button
             key={index}
-            className={`btn text-center shadow-sm ${isToday(day)
-              ? "btn-primary text-white"
-              : day.getTime() === 0
+            className={`btn text-center shadow-sm ${
+              isToday(day)
+                ? "btn-primary text-white"
+                : day.getTime() === 0
                 ? "btn-secondary border-0"
                 : "btn-outline-secondary text-dark"
-              }`}
+            }`}
             style={{
               padding: "10%",
               minHeight: "120px",
@@ -622,10 +619,10 @@ function Calendar() {
                         style={{
                           color:
                             symbolColors[
-                            calendarData.find(
-                              (entry) =>
-                                entry.id === day.toISOString().split("T")[0]
-                            )?.text[idx] || ""
+                              calendarData.find(
+                                (entry) =>
+                                  entry.id === day.toISOString().split("T")[0]
+                              )?.text[idx] || ""
                             ] || "inherit",
                           fontWeight: "bold",
                         }}
@@ -645,7 +642,6 @@ function Calendar() {
         ))}
       </div>
 
-      {/* Modální okno */}
       <div
         id="symbolModal"
         className="modal"
@@ -659,8 +655,8 @@ function Calendar() {
                 type="button"
                 className="btn-close"
                 onClick={() =>
-                (document.getElementById("symbolModal")!.style.display =
-                  "none")
+                  (document.getElementById("symbolModal")!.style.display =
+                    "none")
                 }
               ></button>
             </div>
@@ -669,10 +665,11 @@ function Calendar() {
                 {symbols.map((symbol) => (
                   <button
                     key={symbol}
-                    className={`btn fs-5 ${selectedSymbols.includes(symbol)
-                      ? "btn-primary shadow"
-                      : "btn-outline-secondary"
-                      }`}
+                    className={`btn fs-5 ${
+                      selectedSymbols.includes(symbol)
+                        ? "btn-primary shadow"
+                        : "btn-outline-secondary"
+                    }`}
                     style={{ color: symbolColors[symbol] }}
                     onClick={() => toggleSymbol(symbol)}
                   >
@@ -686,8 +683,8 @@ function Calendar() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() =>
-                (document.getElementById("symbolModal")!.style.display =
-                  "none")
+                  (document.getElementById("symbolModal")!.style.display =
+                    "none")
                 }
               >
                 Zavřít
@@ -707,9 +704,6 @@ function Calendar() {
   );
 }
 
-interface PointsProps {
-  name: string;
-}
 
 interface LogEntry {
   id: number;
@@ -719,16 +713,16 @@ interface LogEntry {
   edit: boolean;
 }
 
-function Points({ name }: PointsProps) {
+function Points({ activeModule, name }: ModuleProps) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [text, setText] = useState<string>("");
   const [change, setChange] = useState<number>(0);
   const [dynamicPoints, setDynamicPoints] = useState<number>(0);
 
   useEffect(() => {
-    const storedData = localStorage.getItem("moduleData-5");
+    const storedData = localStorage.getItem(`moduleData-${activeModule}`);
     if (storedData) {
-      try {
+      try { // is this necessary?
         const parsedData = JSON.parse(storedData);
         if (Array.isArray(parsedData)) {
           const filteredLog = parsedData.filter(
@@ -748,15 +742,15 @@ function Points({ name }: PointsProps) {
   }, [name]);
 
   useEffect(() => {
-    const storedData = localStorage.getItem("moduleData-5");
+    const storedData = localStorage.getItem(`moduleData-${activeModule}`);
     const existingData = storedData ? JSON.parse(storedData) : [];
     const updatedData = Array.isArray(existingData)
       ? [
-        ...existingData.filter((entry: LogEntry) => entry.name !== name),
-        ...log,
-      ]
+          ...existingData.filter((entry: LogEntry) => entry.name !== name),
+          ...log,
+        ]
       : log;
-    localStorage.setItem("moduleData-5", JSON.stringify(updatedData));
+    localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(updatedData));
   }, [log]);
 
   const handleAddLog = () => {
@@ -828,11 +822,17 @@ function Points({ name }: PointsProps) {
           className="table table-bordered table-hover mx-auto"
           style={{ maxWidth: "100%" }}
         >
-          <thead >
+          <thead>
             <tr>
-              <th className="randomthcico" style={{ width: "20%" }}>Rozdíl</th>
-              <th className="randomthcico" style={{ width: "60%" }}>Důvod</th>
-              <th className="randomthcico" style={{ width: "20%" }}>Akce</th>
+              <th className="randomthcico" style={{ width: "20%" }}>
+                Rozdíl
+              </th>
+              <th className="randomthcico" style={{ width: "60%" }}>
+                Důvod
+              </th>
+              <th className="randomthcico" style={{ width: "20%" }}>
+                Akce
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -867,13 +867,13 @@ interface Tale {
   edit: boolean;
 }
 
-const Tales = () => {
+function Tales({ activeModule, name }: ModuleProps) {
   const [tales, setTales] = useState<Tale[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newTale, setNewTale] = useState({ name: "", title: "", text: "" });
 
   useEffect(() => {
-    const storedData = localStorage.getItem("moduleData-4");
+    const storedData = localStorage.getItem(`moduleData-${activeModule}`);
     if (storedData) {
       try {
         setTales(JSON.parse(storedData));
@@ -900,7 +900,9 @@ const Tales = () => {
       window.location.href = url;
     } catch (error) {
       console.error("Failed to load tale content", error);
-      alert("An error occurred while loading the tale content. Please try again.");
+      alert(
+        "An error occurred while loading the tale content. Please try again."
+      );
     }
   };
 
@@ -910,12 +912,19 @@ const Tales = () => {
       return;
     }
 
-    const newId = Date.now().toString(); const updatedTales = [
+    const newId = Date.now().toString();
+    const updatedTales = [
       ...tales,
-      { id: newId, name: newTale.name, title: newTale.title, text: newTale.text, edit: true },
+      {
+        id: newId,
+        name: newTale.name,
+        title: newTale.title,
+        text: newTale.text,
+        edit: true,
+      },
     ];
     setTales(updatedTales);
-    localStorage.setItem("moduleData-4", JSON.stringify(updatedTales));
+    localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(updatedTales));
 
     setNewTale({ name: "", title: "", text: "" });
     setModalVisible(false);
@@ -923,7 +932,7 @@ const Tales = () => {
 
   return (
     <div className="container">
-      {/* Seznam pohádek */}
+      <h1>{name}</h1>
       <div className="tales-container d-flex flex-wrap gap-3 p-3">
         {tales.map((tale) => (
           <div
@@ -997,7 +1006,9 @@ const Tales = () => {
                 id="taleName"
                 className="form-control"
                 value={newTale.name}
-                onChange={(e) => setNewTale({ ...newTale, name: e.target.value })}
+                onChange={(e) =>
+                  setNewTale({ ...newTale, name: e.target.value })
+                }
               />
             </div>
             <div className="mb-3">
@@ -1009,7 +1020,9 @@ const Tales = () => {
                 id="taleTitle"
                 className="form-control"
                 value={newTale.title}
-                onChange={(e) => setNewTale({ ...newTale, title: e.target.value })}
+                onChange={(e) =>
+                  setNewTale({ ...newTale, title: e.target.value })
+                }
               />
             </div>
             <div className="mb-3">
@@ -1021,7 +1034,9 @@ const Tales = () => {
                 className="form-control"
                 rows={5}
                 value={newTale.text}
-                onChange={(e) => setNewTale({ ...newTale, text: e.target.value })}
+                onChange={(e) =>
+                  setNewTale({ ...newTale, text: e.target.value })
+                }
               ></textarea>
             </div>
           </div>
@@ -1065,11 +1080,8 @@ function Settings() {
 
   const handleDarkModeToggle = () => {
     let currentTheme = document.body.getAttribute("data-bs-theme");
-    currentTheme = (currentTheme === "nodark") ? "dark" : "nodark"
-    document.body.setAttribute(
-      "data-bs-theme",
-      currentTheme
-    );
+    currentTheme = currentTheme === "nodark" ? "dark" : "nodark";
+    document.body.setAttribute("data-bs-theme", currentTheme);
     setDarkMode(currentTheme);
     localStorage.setItem("darkMode", currentTheme);
   };
@@ -1099,8 +1111,7 @@ function Settings() {
   };
 
   return (
-    <div
-    >
+    <div>
       <div className="mb-4">
         <h1 className="text-primary font-weight-bold mb-0">Vzhled</h1>
         <hr className="mb-4" />
@@ -1125,36 +1136,42 @@ function Settings() {
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-primary", e.target.value)}
-            value={colorsList["--bs-primary"]?.hexColor || "#007bff"} className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-primary"]?.hexColor || "#007bff"}
+            className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-secondary rounded px-2 py-1">Sekundární</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-secondary", e.target.value)}
-            value={colorsList["--bs-secondary"]?.hexColor || "#6c757d"} className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-secondary"]?.hexColor || "#6c757d"}
+            className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-success rounded px-2 py-1">Úspěšně</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-success", e.target.value)}
-            value={colorsList["--bs-success"]?.hexColor || "#28a745"} className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-success"]?.hexColor || "#28a745"}
+            className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-danger rounded px-2 py-1">Chyba</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-danger", e.target.value)}
-            value={colorsList["--bs-danger"]?.hexColor || "#dc3545"} className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-danger"]?.hexColor || "#dc3545"}
+            className="input-group input-group-sm mb-3"
           />
           <h4 className="bg-warning rounded px-2 py-1">Varování</h4>
           <input
             type="color"
             onChange={(e) => setNewColor("--bs-warning", e.target.value)}
-            value={colorsList["--bs-warning"]?.hexColor || "#ffc107"} className="input-group input-group-sm mb-3"
+            value={colorsList["--bs-warning"]?.hexColor || "#ffc107"}
+            className="input-group input-group-sm mb-3"
           />
           <button onClick={handleSaveColors} className="btn btn-primary">
             Uložit barvy
           </button>
-          {colorChangeMessage && (<div className="mt-3 alert alert-info">{colorChangeMessage}</div>
+          {colorChangeMessage && (
+            <div className="mt-3 alert alert-info">{colorChangeMessage}</div>
           )}
         </div>
       </div>
@@ -1311,16 +1328,16 @@ function Dashboard() {
                 padding: "2%",
               }}
             >
-              <ToDo name="Anička" />
+              <ToDo name="Anička" activeModule={activeModule}/>
             </div>
             <div style={{ flex: 1, textAlign: "center", padding: "2%" }}>
-              <ToDo name="Pepíček" />
+              <ToDo name="Pepíček" activeModule={activeModule}/>
             </div>
           </div>
         ) : null}
-        {activeModule === 2 ? <Notes /> : null}
-        {activeModule === 3 ? <Calendar /> : null}
-        {activeModule === 4 ? <Tales /> : null}
+        {activeModule === 2 ? <Notes name="Poznámky" activeModule={activeModule}/> : null}
+        {activeModule === 3 ? <Calendar name="Kalendář" activeModule={activeModule}/> : null}
+        {activeModule === 4 ? <Tales name="Pohádky" activeModule={activeModule}/> : null}
         {activeModule === 5 ? (
           <div
             style={{
@@ -1339,7 +1356,7 @@ function Dashboard() {
                 paddingRight: "2%",
               }}
             >
-              <Points name="Anička" />
+              <Points name="Anička" activeModule={activeModule}/>
             </div>
             <div
               style={{
@@ -1349,11 +1366,11 @@ function Dashboard() {
                 paddingLeft: "2%",
               }}
             >
-              <Points name="Pepíček" />
+              <Points name="Pepíček" activeModule={activeModule}/>
             </div>
           </div>
         ) : null}
-        {activeModule === 6 ? <ToDo name="Domácnost" /> : null}
+        {activeModule === 6 ? <ToDo name="Domácnost" activeModule={activeModule}/> : null}
         {activeModule === 7 ? <Settings /> : null}
       </div>
     </div>
