@@ -233,10 +233,8 @@ interface ModuleProps {
   name: string;
 }
 
-
 function ToDo({ activeModule, name }: ModuleProps) {
-  if (!name)
-      return <p>err</p>;
+  if (!name) return <p>err</p>;
   const [tasks, setTasks] = useState<
     {
       id: number;
@@ -247,7 +245,7 @@ function ToDo({ activeModule, name }: ModuleProps) {
     }[]
   >([]);
   const [newTask, setNewTask] = useState("");
-  let module = `moduleData-${activeModule}`
+  let module = `moduleData-${activeModule}`;
   useEffect(() => {
     const storedData = localStorage.getItem(module);
     if (storedData) {
@@ -541,7 +539,10 @@ function Calendar({ activeModule, name }: ModuleProps) {
       updatedData.push({ id: selectedDay, text: selectedSymbols, edit: true });
       setCalendarData(updatedData);
 
-      localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(updatedData));
+      localStorage.setItem(
+        `moduleData-${activeModule}`,
+        JSON.stringify(updatedData)
+      );
     }
 
     const modal = document.getElementById("symbolModal");
@@ -704,7 +705,6 @@ function Calendar({ activeModule, name }: ModuleProps) {
   );
 }
 
-
 interface LogEntry {
   id: number;
   change: number;
@@ -722,7 +722,8 @@ function Points({ activeModule, name }: ModuleProps) {
   useEffect(() => {
     const storedData = localStorage.getItem(`moduleData-${activeModule}`);
     if (storedData) {
-      try { // is this necessary?
+      try {
+        // is this necessary?
         const parsedData = JSON.parse(storedData);
         if (Array.isArray(parsedData)) {
           const filteredLog = parsedData.filter(
@@ -750,7 +751,10 @@ function Points({ activeModule, name }: ModuleProps) {
           ...log,
         ]
       : log;
-    localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(updatedData));
+    localStorage.setItem(
+      `moduleData-${activeModule}`,
+      JSON.stringify(updatedData)
+    );
   }, [log]);
 
   const handleAddLog = () => {
@@ -924,7 +928,10 @@ function Tales({ activeModule, name }: ModuleProps) {
       },
     ];
     setTales(updatedTales);
-    localStorage.setItem(`moduleData-${activeModule}`, JSON.stringify(updatedTales));
+    localStorage.setItem(
+      `moduleData-${activeModule}`,
+      JSON.stringify(updatedTales)
+    );
 
     setNewTale({ name: "", title: "", text: "" });
     setModalVisible(false);
@@ -1055,7 +1062,7 @@ function Tales({ activeModule, name }: ModuleProps) {
       )}
     </div>
   );
-};
+}
 
 function Settings() {
   // dark mode
@@ -1328,16 +1335,22 @@ function Dashboard() {
                 padding: "2%",
               }}
             >
-              <ToDo name="Anička" activeModule={activeModule}/>
+              <ToDo name="Anička" activeModule={activeModule} />
             </div>
             <div style={{ flex: 1, textAlign: "center", padding: "2%" }}>
-              <ToDo name="Pepíček" activeModule={activeModule}/>
+              <ToDo name="Pepíček" activeModule={activeModule} />
             </div>
           </div>
         ) : null}
-        {activeModule === 2 ? <Notes name="Poznámky" activeModule={activeModule}/> : null}
-        {activeModule === 3 ? <Calendar name="Kalendář" activeModule={activeModule}/> : null}
-        {activeModule === 4 ? <Tales name="Pohádky" activeModule={activeModule}/> : null}
+        {activeModule === 2 ? (
+          <Notes name="Poznámky" activeModule={activeModule} />
+        ) : null}
+        {activeModule === 3 ? (
+          <Calendar name="Kalendář" activeModule={activeModule} />
+        ) : null}
+        {activeModule === 4 ? (
+          <Tales name="Pohádky" activeModule={activeModule} />
+        ) : null}
         {activeModule === 5 ? (
           <div
             style={{
@@ -1356,7 +1369,7 @@ function Dashboard() {
                 paddingRight: "2%",
               }}
             >
-              <Points name="Anička" activeModule={activeModule}/>
+              <Points name="Anička" activeModule={activeModule} />
             </div>
             <div
               style={{
@@ -1366,11 +1379,13 @@ function Dashboard() {
                 paddingLeft: "2%",
               }}
             >
-              <Points name="Pepíček" activeModule={activeModule}/>
+              <Points name="Pepíček" activeModule={activeModule} />
             </div>
           </div>
         ) : null}
-        {activeModule === 6 ? <ToDo name="Domácnost" activeModule={activeModule}/> : null}
+        {activeModule === 6 ? (
+          <ToDo name="Domácnost" activeModule={activeModule} />
+        ) : null}
         {activeModule === 7 ? <Settings /> : null}
       </div>
     </div>
