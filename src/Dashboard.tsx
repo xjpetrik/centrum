@@ -1404,7 +1404,7 @@ function Expenses({ activeModule, name }: ModuleProps) {
                       >
                         {selectedIssuers[index]}
                         <span style={{ marginLeft: "30px" }}>
-                          {expense} Kč {index}
+                          {expense} Kč
                         </span>
                         <button
                           className="btn btn-sm btn-warning"
