@@ -10,7 +10,8 @@ const modules = [
   { id: 4, name: "Velká kniha pohádek", logo: "🧚" },
   { id: 5, name: "Bodová ohodnocení", logo: "🎁" },
   { id: 6, name: "Domácnost", logo: "🏠" },
-  { id: 7, name: "Nastavení", logo: "⚙️" },
+  { id: 7, name: "Expenses", logo: "💸" },
+  { id: 8, name: "Nastavení", logo: "⚙️" },
 ];
 
 let colorsList: Record<string, { hexColor: string }> = {};
@@ -976,7 +977,7 @@ function Tales({ activeModule, name }: ModuleProps) {
       >
         Přidat pohádku
       </button>
-      
+
       {modalVisible && (
         <div
           className="modal"
@@ -1064,6 +1065,8 @@ function Tales({ activeModule, name }: ModuleProps) {
 }
 
 function Settings() {
+  // TODO REWORK
+  // ------------------------------------------------------------------------------------------------<<---<<--<<
   // dark mode
   // změna primary color bootstrap
   // změna hesla
@@ -1186,6 +1189,276 @@ function Settings() {
           Počet přidaných/odebraných bodů na tomto zařízení:{" "}
           <span className="badge bg-primary text-dark fs-6">666</span> <br />
         </p>
+      </div>
+    </div>
+  );
+}
+
+function Expenses({ activeModule, name }: ModuleProps) {
+  // todo redefine delete
+  const [days, setDays] = useState<Date[]>([]);
+  const [calendarData, setCalendarData] = useState<any[]>(() => {
+    const savedData = localStorage.getItem(`moduleData-${activeModule}`);
+    return savedData ? JSON.parse(savedData) : [];
+  });
+  const [newExpense, setNewExpense] = useState(0);
+  const [newIssuer, setNewIssuer] = useState("X");
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
+  const [selectedIssuers, setSelectedIssuers] = useState<string[]>([]);
+  useEffect(() => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    );
+    const startPaddingDays = (firstDayOfMonth.getDay() + 6) % 7;
+    const generatedDays: Date[] = [];
+
+    for (let i = 0; i < startPaddingDays; i++) {
+      generatedDays.push(new Date(0));
+    }
+
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      generatedDays.push(new Date(today.getFullYear(), today.getMonth(), day));
+    }
+
+    setDays(generatedDays);
+  }, []);
+
+  const isToday = (date: Date) => {
+    if (date.getTime() === 0) return false;
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
+
+  const handleModal = (day: Date) => {
+    const dayKey = day.toISOString().split("T")[0];
+    setSelectedDay(dayKey);
+    const existingEntry = calendarData.find((entry) => entry.id === dayKey);
+    setSelectedExpenses(existingEntry?.text || []);
+    setSelectedIssuers(existingEntry?.issuers || []);
+    const modal = document.getElementById("expModal");
+    if (modal) modal.style.display = "block";
+  };
+
+  const handleAddExpense = () => {
+    if (newExpense === 0 || newIssuer === 'X') {
+      alert("Expense can't be zero nor Issuer!");
+      return;
+    }
+    selectedExpenses.push(newExpense);
+    selectedIssuers.push(newIssuer);
+    if (selectedDay) {
+      const updatedData = calendarData.filter(
+        (entry) => entry.id !== selectedDay
+      );
+      updatedData.push({ id: selectedDay, text: selectedExpenses, issuers: selectedIssuers, edit: true });
+      setCalendarData(updatedData);
+      localStorage.setItem(
+        `moduleData-${activeModule}`,
+        JSON.stringify(updatedData)
+      );
+    }
+  };
+
+  const handleDeleteExpense = (index: number) => {
+    if (selectedDay) {
+      setSelectedExpenses((prevExpenses) => {
+        const updatedExpenses = prevExpenses.filter((_, temp) => temp !== index);
+  
+        setSelectedIssuers((prevIssuers) => {
+          const updatedIssuers = prevIssuers.filter((_, temp) => temp !== index);
+  
+          setCalendarData((prevData) => {
+            const updatedData = prevData.filter((entry) => entry.id !== selectedDay);
+            updatedData.push({
+              id: selectedDay,
+              text: updatedExpenses,
+              issuers: updatedIssuers,
+              edit: true,
+            });
+            setCalendarData(updatedData);
+            localStorage.setItem(
+              `moduleData-${activeModule}`,
+              JSON.stringify(updatedData)
+            );
+            return updatedData;
+          });
+  
+          return updatedIssuers;
+        });
+  
+        return updatedExpenses;
+      });
+    }
+  };
+  
+  
+
+  return (
+    <div className="container my-4">
+      <h2 className="text-center mb-4">{name} 💸</h2>
+      <div
+        className="d-grid gap-2"
+        style={{
+          gridTemplateColumns: "repeat(7, 1fr)",
+          display: "grid",
+        }}
+      >
+        {days.map((day, index) => (
+          <button
+            key={index}
+            className={`btn text-center shadow-sm ${
+              isToday(day)
+                ? "btn-primary text-white"
+                : day.getTime() === 0
+                ? "btn-secondary border-0"
+                : "btn-outline-secondary text-dark"
+            }`}
+            onClick={() => handleModal(day)}
+            style={{
+              padding: "10%",
+              minHeight: "120px",
+              minWidth: "42px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              visibility: day.getTime() === 0 ? "hidden" : "visible",
+            }}
+          >
+            {day.getTime() !== 0 && (
+              <>
+                <div className="fw-bold small mb-2 text-uppercase">
+                  {day.toLocaleDateString("cs-CZ", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "2-digit",
+                  })}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    gap: "2px",
+                  }}
+                >
+                  {(() => {
+                    const entry = calendarData.find(
+                      (entry) => entry.id === day.toISOString().split("T")[0]
+                    );
+
+                    if (entry) {
+                      const sum = entry.text.reduce(
+                        (total: number, num: number) =>
+                          total + (Number(num) || 0),
+                        0
+                      );
+
+                      return <strong>{sum}</strong>;
+                    }
+                  })()}
+                </div>
+              </>
+            )}
+          </button>
+        ))}
+      </div>
+      <div
+        id="expModal"
+        className="modal"
+        style={{ display: "none", position: "fixed" }}
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-primary text-white">
+              <h5 className="modal-title">Přidej výdaj</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() =>
+                  (document.getElementById("expModal")!.style.display = "none")
+                }
+              ></button>
+            </div>
+            <div className="modal-body bg-light">
+              <div className="d-flex flex-wrap gap-3">
+                <ul className="list-group list-group-flush bg-light">
+                  {selectedExpenses.map((expense, index) => (
+                    <>
+                      <li
+                        key={index}
+                        className="d-flex list-group-item bg-light justify-content-between"
+                        style={{
+                          backgroundColor: "transparent",
+                          color: "inherit",
+                        }}
+                      >
+                        {selectedIssuers[index]}
+                        <span style={{ marginLeft: "30px" }}>
+                          {expense} Kč {index}
+                        </span>
+                        <button
+                          className="btn btn-sm btn-warning"
+                          style={{ marginLeft: "30px" }}
+                          onClick={() => handleDeleteExpense(index)}
+                        >
+                          Zamést stopy 🕵️
+                        </button>
+                      </li>
+                    </>
+                  ))}
+                  <hr />
+                  <p>
+                    <strong>Celkově:</strong>{" "}
+                    {selectedExpenses.reduce(
+                      (sum, expense) => sum + expense,
+                      0
+                    )}{" "}
+                    Kč
+                  </p>
+                </ul>
+                <input
+                  type="number"
+                  id="newExpense"
+                  className="form-control"
+                  value={newExpense}
+                  onChange={(e) => setNewExpense(parseInt(e.target.value, 10))}
+                />
+                <select className="form-select" onChange={(e) => setNewIssuer(e.target.value)}>
+                  <option value="X">Kdo utratil tolik peněz?!</option>
+                  <option value="A">Anička</option>
+                  <option value="P">Pepíček</option>
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer bg-light">
+            <button
+                  className="btn btn-primary"
+                  onClick={handleAddExpense}
+                >
+                  Uložit nový výdaj
+                </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  (document.getElementById("expModal")!.style.display = "none")
+                }
+              >
+                Zavřít
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1331,7 +1604,10 @@ function Dashboard() {
         {activeModule === 6 ? (
           <ToDo name="Domácnost" activeModule={activeModule} />
         ) : null}
-        {activeModule === 7 ? <Settings /> : null}
+        {activeModule === 7 ? (
+          <Expenses name="Expenses" activeModule={activeModule} />
+        ) : null}
+        {activeModule === 8 ? <Settings /> : null}
       </div>
     </div>
   );
