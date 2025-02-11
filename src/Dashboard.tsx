@@ -1203,9 +1203,11 @@ function Expenses({ activeModule, name }: ModuleProps) {
   });
   const [newExpense, setNewExpense] = useState(0);
   const [newIssuer, setNewIssuer] = useState("X");
+  const [newCategory, setNewCategory] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
   const [selectedIssuers, setSelectedIssuers] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   useEffect(() => {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -1244,6 +1246,7 @@ function Expenses({ activeModule, name }: ModuleProps) {
     const existingEntry = calendarData.find((entry) => entry.id === dayKey);
     setSelectedExpenses(existingEntry?.text || []);
     setSelectedIssuers(existingEntry?.issuers || []);
+    setSelectedCategories(existingEntry?.categories || []);
     const modal = document.getElementById("expModal");
     if (modal) modal.style.display = "block";
   };
@@ -1255,11 +1258,12 @@ function Expenses({ activeModule, name }: ModuleProps) {
     }
     selectedExpenses.push(newExpense);
     selectedIssuers.push(newIssuer);
+    selectedCategories.push(newCategory);
     if (selectedDay) {
       const updatedData = calendarData.filter(
         (entry) => entry.id !== selectedDay
       );
-      updatedData.push({ id: selectedDay, text: selectedExpenses, issuers: selectedIssuers, edit: true });
+      updatedData.push({ id: selectedDay, text: selectedExpenses, issuers: selectedIssuers, categories: selectedCategories, edit: true });
       setCalendarData(updatedData);
       localStorage.setItem(
         `moduleData-${activeModule}`,
@@ -1272,35 +1276,34 @@ function Expenses({ activeModule, name }: ModuleProps) {
     if (selectedDay) {
       setSelectedExpenses((prevExpenses) => {
         const updatedExpenses = prevExpenses.filter((_, temp) => temp !== index);
-  
         setSelectedIssuers((prevIssuers) => {
           const updatedIssuers = prevIssuers.filter((_, temp) => temp !== index);
-  
-          setCalendarData((prevData) => {
-            const updatedData = prevData.filter((entry) => entry.id !== selectedDay);
-            updatedData.push({
-              id: selectedDay,
-              text: updatedExpenses,
-              issuers: updatedIssuers,
-              edit: true,
+          setSelectedCategories((prevCategories) => {
+            const updatedCategories = prevCategories.filter((_, temp) => temp !== index);
+            setCalendarData((prevData) => {
+              const updatedData = prevData.filter((entry) => entry.id !== selectedDay);
+              updatedData.push({
+                id: selectedDay,
+                text: updatedExpenses,
+                issuers: updatedIssuers,
+                categories: updatedCategories,
+                edit: true,
+              });
+              setCalendarData(updatedData);
+              localStorage.setItem(
+                `moduleData-${activeModule}`,
+                JSON.stringify(updatedData)
+              );
+              return updatedData;
             });
-            setCalendarData(updatedData);
-            localStorage.setItem(
-              `moduleData-${activeModule}`,
-              JSON.stringify(updatedData)
-            );
-            return updatedData;
+            return updatedCategories;
           });
-  
           return updatedIssuers;
         });
-  
         return updatedExpenses;
       });
     }
   };
-  
-  
 
   return (
     <div className="container my-4">
@@ -1402,7 +1405,10 @@ function Expenses({ activeModule, name }: ModuleProps) {
                           color: "inherit",
                         }}
                       >
-                        {selectedIssuers[index]}
+                        {selectedCategories[index]}
+                        <span style={{ marginLeft: "30px" }}>
+                          {selectedIssuers[index]}
+                        </span>
                         <span style={{ marginLeft: "30px" }}>
                           {expense} Kč
                         </span>
@@ -1434,10 +1440,18 @@ function Expenses({ activeModule, name }: ModuleProps) {
                   onChange={(e) => setNewExpense(parseInt(e.target.value, 10))}
                 />
                 <select className="form-select" onChange={(e) => setNewIssuer(e.target.value)}>
-                  <option value="X">Kdo utratil tolik peněz?!</option>
+                  <option value="X">Kdo utratil tolik peněz</option>
                   <option value="A">Anička</option>
                   <option value="P">Pepíček</option>
                 </select>
+                <input
+                  type="text"
+                  id="newCategory"
+                  className="form-control"
+                  placeholder="a ještě k tomu za co?!"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                />
               </div>
             </div>
             <div className="modal-footer bg-light">
