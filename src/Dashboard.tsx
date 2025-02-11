@@ -1208,6 +1208,9 @@ function Expenses({ activeModule, name }: ModuleProps) {
   const [selectedExpenses, setSelectedExpenses] = useState<number[]>([]);
   const [selectedIssuers, setSelectedIssuers] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [allIssuers, setAllIssuers] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [allExpenses, setAllExpenses] = useState(new Map<string, number[]>());
   useEffect(() => {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -1305,9 +1308,35 @@ function Expenses({ activeModule, name }: ModuleProps) {
     }
   };
 
+  useEffect(() => {
+    let tempCategories = [...new Set(calendarData.flatMap(item => item.categories))];
+    let tempIssuers = [...new Set(calendarData.flatMap(item => item.issuers))];
+    let tempExpenses = new Map<string, number[]>();
+    tempCategories.forEach(category => {
+      tempExpenses.set(category, new Array(tempIssuers.length).fill(0));
+    });
+    for (let i = 0; i < calendarData.length; i++) {
+      for (let j = 0; j < calendarData[i].text.length; j++) {
+        for (let k = 0; k < tempIssuers.length; k++) {
+          if (tempIssuers[k] === calendarData[i].issuers[j]) {
+            let tempArray = tempExpenses.get(calendarData[i].categories[j]);
+            if (tempArray) {
+              tempArray[k] += calendarData[i].text[j];
+              tempExpenses.set(calendarData[i].categories[j], tempArray);
+            }
+          }
+        }
+      }
+    }
+    setAllCategories(tempCategories);
+    setAllIssuers(tempIssuers);
+    setAllExpenses(tempExpenses);
+  }, [calendarData]);
+
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">{name} 💸</h2>
+      
       <div
         className="d-grid gap-2"
         style={{
@@ -1375,6 +1404,33 @@ function Expenses({ activeModule, name }: ModuleProps) {
           </button>
         ))}
       </div>
+      <table className="table mt-5">
+      <thead>
+        <tr>
+          <th scope="col">Kategorie</th>
+          {allIssuers.map((issuer, index) => (
+            <th scope="col" key={index}>{issuer}</th>
+          ))}
+          <th scope="col">Suma</th>
+        </tr>
+      </thead>
+      <tbody>
+        {allCategories.map(category => {
+          const categoryExpenses = allExpenses.get(category) ?? new Array(allIssuers.length).fill(0);
+          const categorySum = categoryExpenses.reduce((sum, value) => sum + value, 0);
+
+          return (
+            <tr key={category}>
+              <td scope="row"><strong>{category}</strong></td>
+              {categoryExpenses.map((value, issuerIndex) => (
+                <td key={issuerIndex}>{value}</td>
+              ))}
+              <td><strong>{categorySum}</strong></td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
       <div
         id="expModal"
         className="modal"
@@ -1396,7 +1452,6 @@ function Expenses({ activeModule, name }: ModuleProps) {
               <div className="d-flex flex-wrap gap-3">
                 <ul className="list-group list-group-flush bg-light">
                   {selectedExpenses.map((expense, index) => (
-                    <>
                       <li
                         key={index}
                         className="d-flex list-group-item bg-light justify-content-between"
@@ -1420,7 +1475,6 @@ function Expenses({ activeModule, name }: ModuleProps) {
                           Zamést stopy 🕵️
                         </button>
                       </li>
-                    </>
                   ))}
                   <hr />
                   <p>
