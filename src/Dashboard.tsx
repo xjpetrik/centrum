@@ -11,7 +11,8 @@ const modules = [
   { id: 5, name: "Bodová ohodnocení", logo: "🎁" },
   { id: 6, name: "Domácnost", logo: "🏠" },
   { id: 7, name: "Expenses", logo: "💸" },
-  { id: 8, name: "Nastavení", logo: "⚙️" },
+  { id: 8, name: "Watchlist", logo: "🍿" },
+  { id: 9, name: "Nastavení", logo: "⚙️" },
 ];
 
 let colorsList: Record<string, { hexColor: string }> = {};
@@ -1255,7 +1256,7 @@ function Expenses({ activeModule, name }: ModuleProps) {
   };
 
   const handleAddExpense = () => {
-    if (newExpense === 0 || newIssuer === 'X') {
+    if (newExpense === 0 || newIssuer === "X") {
       alert("Expense can't be zero nor Issuer!");
       return;
     }
@@ -1266,7 +1267,13 @@ function Expenses({ activeModule, name }: ModuleProps) {
       const updatedData = calendarData.filter(
         (entry) => entry.id !== selectedDay
       );
-      updatedData.push({ id: selectedDay, text: selectedExpenses, issuers: selectedIssuers, categories: selectedCategories, edit: true });
+      updatedData.push({
+        id: selectedDay,
+        text: selectedExpenses,
+        issuers: selectedIssuers,
+        categories: selectedCategories,
+        edit: true,
+      });
       setCalendarData(updatedData);
       localStorage.setItem(
         `moduleData-${activeModule}`,
@@ -1278,13 +1285,21 @@ function Expenses({ activeModule, name }: ModuleProps) {
   const handleDeleteExpense = (index: number) => {
     if (selectedDay) {
       setSelectedExpenses((prevExpenses) => {
-        const updatedExpenses = prevExpenses.filter((_, temp) => temp !== index);
+        const updatedExpenses = prevExpenses.filter(
+          (_, temp) => temp !== index
+        );
         setSelectedIssuers((prevIssuers) => {
-          const updatedIssuers = prevIssuers.filter((_, temp) => temp !== index);
+          const updatedIssuers = prevIssuers.filter(
+            (_, temp) => temp !== index
+          );
           setSelectedCategories((prevCategories) => {
-            const updatedCategories = prevCategories.filter((_, temp) => temp !== index);
+            const updatedCategories = prevCategories.filter(
+              (_, temp) => temp !== index
+            );
             setCalendarData((prevData) => {
-              const updatedData = prevData.filter((entry) => entry.id !== selectedDay);
+              const updatedData = prevData.filter(
+                (entry) => entry.id !== selectedDay
+              );
               updatedData.push({
                 id: selectedDay,
                 text: updatedExpenses,
@@ -1309,10 +1324,14 @@ function Expenses({ activeModule, name }: ModuleProps) {
   };
 
   useEffect(() => {
-    let tempCategories = [...new Set(calendarData.flatMap(item => item.categories))];
-    let tempIssuers = [...new Set(calendarData.flatMap(item => item.issuers))];
+    let tempCategories = [
+      ...new Set(calendarData.flatMap((item) => item.categories)),
+    ];
+    let tempIssuers = [
+      ...new Set(calendarData.flatMap((item) => item.issuers)),
+    ];
     let tempExpenses = new Map<string, number[]>();
-    tempCategories.forEach(category => {
+    tempCategories.forEach((category) => {
       tempExpenses.set(category, new Array(tempIssuers.length).fill(0));
     });
     for (let i = 0; i < calendarData.length; i++) {
@@ -1336,7 +1355,7 @@ function Expenses({ activeModule, name }: ModuleProps) {
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">{name} 💸</h2>
-      
+
       <div
         className="d-grid gap-2"
         style={{
@@ -1395,7 +1414,7 @@ function Expenses({ activeModule, name }: ModuleProps) {
                         0
                       );
 
-                      return <strong>{sum}</strong>;
+                      return <strong className="fs-4">{sum}</strong>;
                     }
                   })()}
                 </div>
@@ -1405,32 +1424,42 @@ function Expenses({ activeModule, name }: ModuleProps) {
         ))}
       </div>
       <table className="table mt-5">
-      <thead>
-        <tr>
-          <th scope="col">Kategorie</th>
-          {allIssuers.map((issuer, index) => (
-            <th scope="col" key={index}>{issuer}</th>
-          ))}
-          <th scope="col">Suma</th>
-        </tr>
-      </thead>
-      <tbody>
-        {allCategories.map(category => {
-          const categoryExpenses = allExpenses.get(category) ?? new Array(allIssuers.length).fill(0);
-          const categorySum = categoryExpenses.reduce((sum, value) => sum + value, 0);
+        <thead>
+          <tr>
+            <th scope="col">Kategorie</th>
+            {allIssuers.map((issuer, index) => (
+              <th scope="col" key={index}>
+                {issuer}
+              </th>
+            ))}
+            <th scope="col">Suma</th>
+          </tr>
+        </thead>
+        <tbody>
+          {allCategories.map((category) => {
+            const categoryExpenses =
+              allExpenses.get(category) ?? new Array(allIssuers.length).fill(0);
+            const categorySum = categoryExpenses.reduce(
+              (sum, value) => sum + value,
+              0
+            );
 
-          return (
-            <tr key={category}>
-              <td scope="row"><strong>{category}</strong></td>
-              {categoryExpenses.map((value, issuerIndex) => (
-                <td key={issuerIndex}>{value}</td>
-              ))}
-              <td><strong>{categorySum}</strong></td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+            return (
+              <tr key={category}>
+                <td scope="row">
+                  <strong>{category}</strong>
+                </td>
+                {categoryExpenses.map((value, issuerIndex) => (
+                  <td key={issuerIndex}>{value}</td>
+                ))}
+                <td>
+                  <strong>{categorySum}</strong>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
       <div
         id="expModal"
         className="modal"
@@ -1452,29 +1481,27 @@ function Expenses({ activeModule, name }: ModuleProps) {
               <div className="d-flex flex-wrap gap-3">
                 <ul className="list-group list-group-flush bg-light">
                   {selectedExpenses.map((expense, index) => (
-                      <li
-                        key={index}
-                        className="d-flex list-group-item bg-light justify-content-between"
-                        style={{
-                          backgroundColor: "transparent",
-                          color: "inherit",
-                        }}
+                    <li
+                      key={index}
+                      className="d-flex list-group-item bg-light justify-content-between"
+                      style={{
+                        backgroundColor: "transparent",
+                        color: "inherit",
+                      }}
+                    >
+                      {selectedCategories[index]}
+                      <span style={{ marginLeft: "30px" }}>
+                        {selectedIssuers[index]}
+                      </span>
+                      <span style={{ marginLeft: "30px" }}>{expense} Kč</span>
+                      <button
+                        className="btn btn-sm btn-warning"
+                        style={{ marginLeft: "30px" }}
+                        onClick={() => handleDeleteExpense(index)}
                       >
-                        {selectedCategories[index]}
-                        <span style={{ marginLeft: "30px" }}>
-                          {selectedIssuers[index]}
-                        </span>
-                        <span style={{ marginLeft: "30px" }}>
-                          {expense} Kč
-                        </span>
-                        <button
-                          className="btn btn-sm btn-warning"
-                          style={{ marginLeft: "30px" }}
-                          onClick={() => handleDeleteExpense(index)}
-                        >
-                          Zamést stopy 🕵️
-                        </button>
-                      </li>
+                        Zamést stopy 🕵️
+                      </button>
+                    </li>
                   ))}
                   <hr />
                   <p>
@@ -1493,7 +1520,10 @@ function Expenses({ activeModule, name }: ModuleProps) {
                   value={newExpense}
                   onChange={(e) => setNewExpense(parseInt(e.target.value, 10))}
                 />
-                <select className="form-select" onChange={(e) => setNewIssuer(e.target.value)}>
+                <select
+                  className="form-select"
+                  onChange={(e) => setNewIssuer(e.target.value)}
+                >
                   <option value="X">Kdo utratil tolik peněz</option>
                   <option value="A">Anička</option>
                   <option value="P">Pepíček</option>
@@ -1509,12 +1539,9 @@ function Expenses({ activeModule, name }: ModuleProps) {
               </div>
             </div>
             <div className="modal-footer bg-light">
-            <button
-                  className="btn btn-primary"
-                  onClick={handleAddExpense}
-                >
-                  Uložit nový výdaj
-                </button>
+              <button className="btn btn-primary" onClick={handleAddExpense}>
+                Uložit nový výdaj
+              </button>
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -1529,6 +1556,305 @@ function Expenses({ activeModule, name }: ModuleProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+interface Movie {
+  id: string;
+  text: string;
+  season: number;
+  episode: number;
+  banner: string; 
+  url: string;
+  edit: boolean;
+}
+
+function Watchlist({ activeModule, name }: ModuleProps) {
+  // modal, "did you see the episode?"
+  // implicit episode++
+  // if 404, next season
+  const [selectedMovie, setSelectedMovie] = useState(0);
+  const [watchList, setWatchList] = useState<any[]>(() => {
+    const savedData = localStorage.getItem(`moduleData-${activeModule}`);
+    return savedData ? JSON.parse(savedData) : [];
+  });
+  const [newMovie, setNewMovie] = useState({id: 0, text: "", url: "", banner: "", season: 0, episode: 0, edit: true})
+  const [increment, setIncrement] = useState(1);
+  const handleModal = (modalName: string, movieId?: number) => {
+    const modal = document.getElementById(`${modalName}Modal`);
+    if (modal) modal.style.display = "block";
+    if (modalName === "watch" && movieId) {
+      let entry = (watchList.find((entry) => entry.id === movieId));
+      setSelectedMovie(entry.id);
+      if (entry.url) {
+        let newUrl = entry.url.replace(/\^SEASON\^/g, String(entry.season).padStart(2, "0"));
+        newUrl = newUrl.replace(/\^EPISODE\^/g, String(entry.episode).padStart(2, "0"));
+        window.open(newUrl, "_blank", "noopener,noreferrer");
+      } else {
+        alert("chyba v url");
+      }
+    }
+  };
+  const handleCloseModal = (modalName: string) => {
+    const modal = document.getElementById(`${modalName}Modal`);
+    if (modal) modal.style.display = "none";
+  }
+
+  const handleChangeForm = (e: any) => {
+    const { name, value } = e.target;
+    setNewMovie((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  }
+
+  const handleAddMovie = () => {
+    let tempNewMovie = newMovie;
+    tempNewMovie.id = Date.now(); 
+    const updatedWatchList = [...watchList, tempNewMovie];
+    setWatchList(updatedWatchList);
+    localStorage.setItem(
+      `moduleData-${activeModule}`,
+      JSON.stringify(updatedWatchList)
+    );
+    setNewMovie({text: "", url: "", banner: "", season: 0, episode: 0, edit: true, id: 0});
+    handleCloseModal("add");
+  }
+
+  const handleRemoveMovie = () => {
+    const updatedData = watchList.filter(
+      (entry) => entry.id !== selectedMovie
+    );
+    updatedData.push({
+      id: selectedMovie,
+      text: "",
+      edit: true,
+    });
+    setWatchList(updatedData);
+    localStorage.setItem(
+      `moduleData-${activeModule}`,
+      JSON.stringify(updatedData)
+    );
+  }
+
+  return (
+    <div className="container" style={{width: "100%", height: "100%"}}>
+      <title>Centrum\{name}</title>
+      <div className="d-flex flex-wrap gap-3 p-3">
+      {watchList.map((movie) => (
+        <div
+          key={movie.id}
+          className="card shadow-sm border-0 rounded-3 my-4 mx-1"
+          style={{
+            width: "30%",
+            height: "70%",
+            cursor: "pointer",
+            transition: "transform 0.2s",
+          }}
+          onClick={() => handleModal("watch", movie.id)}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.01)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <div className="overflow-hidden" style={{ width: "100%", height: "100%" }}>
+          <img
+            src={movie.banner}
+            className="card-img-top h-100 w-100"
+            style={{ objectFit: "cover"}}
+          />
+          </div>
+          <div className="card-body text-center bg-primary">
+            <p className="card-title text-white fs-5 fw-bold">{movie.text}</p>
+            <p className="card-text text-white fs-4">{movie.season && movie.episode ? `s${movie.season}e${movie.episode}` : "🎬"}</p>
+          </div>
+        </div>
+      ))}
+      </div>
+      <button
+        onClick={() => handleModal("add")}
+        className="btn btn-info mt-4 fs-5"
+      >
+        Přidat nový seriál/film na <strong>WatchList</strong>
+      </button>
+      {/* Modal to watch*/}
+      <div
+        id="watchModal"
+        className="modal"
+        style={{ display: "none", position: "fixed", boxShadow: "0 5px 15px rgba(0,0,0,.5)"}}
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-primary text-white">
+              <h5 className="modal-title">Did you watch the episode?</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => handleCloseModal("watch")}
+              ></button>
+            </div>
+            <div className="modal-body bg-light">
+              <input
+                type="number"
+                id="increment"
+                className="form-control"
+                value={increment}
+                onChange={(e) => setIncrement(parseInt(e.target.value, 10))}
+              />
+              <button
+                className="btn btn-danger mt-3 fs-5"
+              >
+                Season++
+              </button>
+              <button
+                className="btn btn-warning mt-3 fs-5"
+                style={{
+                  marginLeft: "50%"
+                }}
+              >
+                Episode++
+              </button>
+              
+            </div>
+            <div className="modal-footer bg-light">
+              <button
+                className="btn btn-primary"
+                onClick={() => {handleCloseModal("watch");handleModal("change");}}
+              >
+               Změnit nastavení 
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{
+                  marginLeft: "50%"
+                }}
+                onClick={() => handleCloseModal("watch")}
+              >
+                Storno
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Modal to add */}
+      <div
+        id="addModal"
+        className="modal"
+        style={{ display: "none", position: "fixed" }}
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-primary text-white">
+              <h5 className="modal-title">Přidej novou odrážku na seznam</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => handleCloseModal("add")}
+              ></button>
+            </div>
+            <div className="modal-body bg-light">
+              <form>
+                <input
+                  type="text"
+                  name="text"
+                  className="form-control mt-2"
+                  placeholder="Název filmu/seriálu"
+                  value={newMovie.text}
+                  onChange={handleChangeForm}
+                />
+                <input
+                  type="text"
+                  name="banner"
+                  className="form-control mt-2"
+                  placeholder="Odkaz na plakát"
+                  value={newMovie.banner}
+                  onChange={handleChangeForm}
+                />
+                <input
+                  type="text"
+                  name="url"
+                  className="form-control mt-2"
+                  placeholder="Odkaz na 👀 stránku"
+                  value={newMovie.url}
+                  onChange={handleChangeForm}
+                />
+                <p className="badge text-danger"><small>Tam, kde jsou čísla epizod a sérií, dosaď ^EPISODE^ a ^SEASON^</small></p>
+                <div className="row">
+                  <div className="col">
+                  <label>Season</label>
+                    <input
+                      type="number"
+                      name="season"
+                      className="form-control"
+                      value={newMovie.season}
+                      onChange={handleChangeForm}
+                    />
+                  </div>
+                  <div className="col">
+                    <label>Episode</label>
+                    <input
+                      type="number"
+                      name="episode"
+                      className="form-control"
+                      value={newMovie.episode}
+                      onChange={handleChangeForm}
+                    />
+                  </div>
+                  <p className="badge text-secondary"><small>Když se Episode a Season rovná nule, znamená to, že se jedná o <strong>FILM</strong></small></p>
+                </div>
+                </form>
+            </div>
+            <div className="modal-footer bg-light">
+              <button
+                className="btn btn-primary"
+                style={{
+                  marginLeft: "50%"
+                }}
+                onClick={handleAddMovie}
+              >
+                Přidat  
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleCloseModal("add")}
+              >
+                Storno
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Modal to change */}
+      <div
+        id="changeModal"
+        className="modal"
+        style={{ display: "none", position: "fixed" }}
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header bg-primary text-white">
+              <h5 className="modal-title">To Watch</h5>
+            </div>
+            <div className="modal-body bg-light">
+            <button
+                className="btn btn-danger"
+                style={{width: "100%"}}
+                onClick={() => handleRemoveMovie()}
+              >
+                Smazat z watchlistu
+              </button>
+            </div>
+            <div className="modal-footer bg-light">
+              <button
+                className="btn btn-secondary"
+                onClick={() => handleCloseModal("change")}
+              >
+                Storno
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
   );
 }
 
@@ -1675,7 +2001,10 @@ function Dashboard() {
         {activeModule === 7 ? (
           <Expenses name="Expenses" activeModule={activeModule} />
         ) : null}
-        {activeModule === 8 ? <Settings /> : null}
+        {activeModule === 8 ? (
+          <Watchlist name="Watchlist" activeModule={activeModule} />
+        ) : null}
+        {activeModule === 9 ? <Settings /> : null}
       </div>
     </div>
   );
