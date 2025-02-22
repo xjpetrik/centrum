@@ -1996,7 +1996,43 @@ function Dashboard() {
           </div>
         ) : null}
         {activeModule === 6 ? (
-          <ToDo name="Domácnost" activeModule={activeModule} />
+          <div
+            style={{
+              display: "flex",
+              height: "100%",
+              justifyContent: "space-between",
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                borderRight: "1px solid silver",
+                textAlign: "center",
+                padding: "2%",
+              }}
+            >
+              <ToDo name="Domácnost 🏠" activeModule={activeModule} />
+            </div>
+            <div
+              style={{
+                flex: 1,
+                borderRight: "1px solid silver",
+                textAlign: "center",
+                padding: "2%",
+              }}
+            >
+              <ToDo name="Hygiena 🧼" activeModule={activeModule} />
+            </div>
+            <div
+              style={{
+                flex: 1,
+                textAlign: "center",
+                padding: "2%",
+              }}
+            >
+              <ToDo name="Lednička ❄️" activeModule={activeModule} />
+            </div>
+          </div>
         ) : null}
         {activeModule === 7 ? (
           <Expenses name="Expenses" activeModule={activeModule} />
