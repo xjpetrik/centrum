@@ -1637,6 +1637,29 @@ function Watchlist({ activeModule, name }: ModuleProps) {
     );
   }
 
+  const handleChangeSeason = (isSeason: boolean) => {
+    const updatedData = watchList.filter(
+      (entry) => entry.id !== selectedMovie
+    );
+    let selectedMovieAll = watchList.find(entry => entry.id === selectedMovie);
+    if (selectedMovieAll) {
+      updatedData.push({
+        ...selectedMovieAll,
+        season: isSeason ? Number(selectedMovieAll.season) + increment : Number(selectedMovieAll.season),
+        episode: !isSeason ? Number(selectedMovieAll.episode) + increment : Number(selectedMovieAll.episode),
+        edit: true,
+      });
+    }
+    else
+      console.log("err");
+    setWatchList(updatedData);
+    localStorage.setItem(
+      `moduleData-${activeModule}`,
+      JSON.stringify(updatedData)
+    );
+    handleCloseModal("watch");
+  }
+
   return (
     <div className="container" style={{width: "100%", height: "100%"}}>
       <title>Centrum\{name}</title>
@@ -1701,6 +1724,7 @@ function Watchlist({ activeModule, name }: ModuleProps) {
               />
               <button
                 className="btn btn-danger mt-3 fs-5"
+                onClick={() => handleChangeSeason(true)}
               >
                 Season++
               </button>
@@ -1709,6 +1733,7 @@ function Watchlist({ activeModule, name }: ModuleProps) {
                 style={{
                   marginLeft: "50%"
                 }}
+                onClick={() => handleChangeSeason(false)}
               >
                 Episode++
               </button>
