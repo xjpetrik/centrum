@@ -470,7 +470,7 @@ function Calendar({ activeModule, name }: ModuleProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
 
-  const symbols = ["👀", "😈", "💣", "🩸", "🧴", "🤧", "🍊", "🚰"];
+  const symbols = ["👀", "😈", "💣", "🩸", "🧴", "🤧", "💦", "🚰"];
   const symbolColors: { [key: string]: string } = {
     "👀": "black",
     "😈": "purple",
